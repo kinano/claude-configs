@@ -72,4 +72,5 @@ Shared configuration files for [Claude Code](https://docs.anthropic.com/en/docs/
 
 ## Useful Links
 
+- [Hamel Husain's Evals skills](https://hamel.dev/blog/posts/evals-skills/)
 - [Claude Code Hooks](https://code.claude.com/docs/en/hooks)
