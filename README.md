@@ -101,3 +101,15 @@ claude mcp add dbt \
   -e ... \ Add all the DBT ENV VARs required by your DBT project
   -- uvx dbt-mcp
 ```
+
+### Langfuse MCP
+
+Inspired by [Hamel Husain's Evals Skills](https://hamel.dev/blog/posts/evals-skills/) for Claude Code.
+[Langfuse MCP Documentation](https://langfuse.com/docs/api-and-data-platform/features/mcp-server)
+
+```
+LANGFUSE_BASE_64_TOKEN=$(echo -n "$LANGFUSE_PUBLIC_KEY:$LANGFUSE_SECRET_KEY" | base64)
+
+claude mcp add --transport http langfuse https://us.cloud.langfuse.com/api/public/mcp \
+    --header "Authorization: Basic $LANGFUSE_BASE_64_TOKEN"
+```
