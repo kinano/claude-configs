@@ -89,5 +89,13 @@
   "feedbackSurveyState": {
     "lastShownTime": 1754572875128
   },
-  "effortLevel": "low"
+  "effortLevel": "low",
+  "mcpServers": {
+    "mcpServers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest"]
+      }
+    }
+  }
 }
