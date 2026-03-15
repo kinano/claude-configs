@@ -14,8 +14,4 @@
 
 7. Use the local skills available to you when you are asked to perform coding tasks.
 
-8. Before you open a PR, you should spin up a review agent who has expertise in runtime bugs, the programming language in use, security practices and software architecture. They should also have expertise in identifying severity of the issues identified in the PR. The agent must analyze the changes made in the feature branch against the base branch and must generate a list of action items that must be addressed before opening the PR.
-
-9. Present the PR action items from the previous step to the human and allow them to choose an action (add to todo list or ignore). Once the action items have been presented to the human, you can work on addressing the todo list.
-
-10. Once the PR todo list is complete, prompt the human to either review the changes or to accept them. Once the changes are accepted, you can commit, push and open the PR.
+8. Before opening any PR, you must run `/review` to ensure code changes have been reviewed by expert critics and approved by the human.

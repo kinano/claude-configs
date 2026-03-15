@@ -33,7 +33,7 @@ Shared configuration files for [Claude Code](https://docs.anthropic.com/en/docs/
    ```sh
 
    # Adjust to fit your local setup
-   export REPO_DIRECTORY_PATH=~/dev/claude-configs
+   export REPO_DIRECTORY_PATH=~/software_projects/claude-configs
 
    # Settings
    ln -sf $REPO_DIRECTORY_PATH/settings.json ~/.claude/settings.json

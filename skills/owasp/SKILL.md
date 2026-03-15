@@ -1,6 +1,7 @@
 ---
 name: owasp-security
 description: Use when reviewing code for security vulnerabilities, implementing authentication/authorization, handling user input, or discussing web application security. Covers OWASP Top 10:2025, ASVS 5.0, and Agentic AI security (2026).
+disable-model-invocation: false
 ---
 
 # OWASP Security Best Practices Skill

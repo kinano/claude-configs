@@ -5,36 +5,19 @@
   "permissions": {
     "allow": [
       "Bash(uv run:*)",
-      "WebFetch(domain:arize.com)",
-      "WebFetch(domain:docs.arize.com)",
-      "Bash(mv:*)",
       "Bash(find:*)",
-      "Bash(aws sts:*)",
-      "Bash(aws iam list-users:*)",
       "Bash(git fetch:*)",
       "Bash(git checkout:*)",
       "Bash(git pull:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)",
       "Bash(gh pr create:*)",
       "Bash(nvm:*)",
       "Bash(git log:*)",
-      "Bash(source:*)",
       "Bash(git reset:*)",
       "Bash(cat:*)",
-      "WebFetch(domain:nvlpubs.nist.gov)",
       "WebSearch",
-      "Bash(xargs ls:*)",
-      "Bash(xargs:*)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(AWS_PROFILE=bi-prod aws s3:*)",
-      "Bash(AWS_PROFILE=prod aws s3api:*)",
-      "Bash(AWS_PROFILE=prod aws s3:*)",
-      "Bash(AWS_PROFILE=prod aws cloudwatch:*)",
       "Bash(sort:*)",
-      "Bash(AWS_PROFILE=prod aws cloudfront:*)",
       "Bash(grep:*)",
       "Bash(python3:*)",
       "Bash(npm run test:*)",
@@ -57,7 +40,7 @@
       "Read(**/.env/**)"
     ]
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "hooks": {
     "PostToolUse": [
       {
@@ -78,16 +61,16 @@
   "enabledPlugins": {
     "evals-skills@hamelsmu-evals-skills": true
   },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "low",
+  "voiceEnabled": true,
   "skills": {
     "langfuse": {
       "type": "command",
       "command": "npx langfuse-cli@latest get-skill"
     }
   },
-  "alwaysThinkingEnabled": true,
-  "voiceEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754572875128
-  },
-  "effortLevel": "low"
+  }
 }

@@ -1,0 +1,27 @@
+---
+name: review-software
+description: Used to run githooks, perform code review with expert critics, and commit/push verified changes
+disable-model-invocation: false
+---
+
+# Code Review Skill
+
+1. Ask the caller to select the repos that should be used to review the code changes:
+
+- current directory
+- a list of repos in the file system
+
+2. enable and run githooks in the repos impacted by the code changes and fix errors (linting, type checks, tests) before committing. Most repos have dedicated commands to achieve these goals either in package.json or pyproject.toml.
+3. Once you are ready to commit the changes, prompt the human to select their preferred review options:
+
+- one generalist critic
+- a team of critics who have expertise in the technology stacks being used and best security practices. The critics must create a markdown file to list their revisions sorted by severity (high first).
+- Manual review by the human.
+
+4. Prompt the human to select the next step from the following options:
+
+- Ignore code review revisions and proceed to next step.
+- Implement revisions.
+
+5. Prepare, summarize the changes in the changed files. Always prefix commits with [{ticket-id}]: {summary of change}. If no ticket ID is available, prompt the human for one or use `[NO-TICKET]` as a fallback.
+6. Commit and push. If the push fails due to pre-push hook errors, prompt the human for approval before using `git push --no-verify`.
