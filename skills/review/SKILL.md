@@ -14,7 +14,7 @@ disable-model-invocation: false
 2. enable and run githooks in the repos impacted by the code changes and fix errors (linting, type checks, tests) before committing. Most repos have dedicated commands to achieve these goals either in package.json or pyproject.toml.
 3. Once you are ready to commit the changes, prompt the human to select their preferred review options:
 
-- one generalist critic
+- one generalist critic (good for simple tasks)
 - a team of critics who have expertise in the technology stacks being used and best security practices. The critics must create a markdown file to list their revisions sorted by severity (high first).
 - Manual review by the human.
 

@@ -72,5 +72,13 @@
   },
   "feedbackSurveyState": {
     "lastShownTime": 1754572875128
+  },
+  "extraKnownMarketplaces": {
+    "hamelsmu-evals-skills": {
+      "source": {
+        "source": "github",
+        "repo": "hamelsmu/evals-skills"
+      }
+    }
   }
 }

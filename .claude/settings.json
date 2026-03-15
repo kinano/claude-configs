@@ -1,5 +1,6 @@
 {
   "enabledPlugins": {
-    "evals-skills@hamelsmu-evals-skills": true
+    "evals-skills@hamelsmu-evals-skills": true,
+    "code-review@claude-plugins-official": true
   }
 }
