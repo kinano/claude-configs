@@ -40,7 +40,7 @@
       "Read(**/.env/**)"
     ]
   },
-  "model": "opus[1m]",
+  "model": "opusplan",
   "hooks": {
     "PostToolUse": [
       {
@@ -61,6 +61,14 @@
   "enabledPlugins": {
     "evals-skills@hamelsmu-evals-skills": true
   },
+  "extraKnownMarketplaces": {
+    "hamelsmu-evals-skills": {
+      "source": {
+        "source": "github",
+        "repo": "hamelsmu/evals-skills"
+      }
+    }
+  },
   "alwaysThinkingEnabled": true,
   "effortLevel": "low",
   "voiceEnabled": true,
@@ -72,14 +80,6 @@
   },
   "feedbackSurveyState": {
     "lastShownTime": 1754572875128
-  },
-  "extraKnownMarketplaces": {
-    "hamelsmu-evals-skills": {
-      "source": {
-        "source": "github",
-        "repo": "hamelsmu/evals-skills"
-      }
-    }
   },
   "knownMarketplaces": []
 }
