@@ -38,25 +38,38 @@ Shared configuration files for [Claude Code](https://docs.anthropic.com/en/docs/
    export REPO_DIRECTORY_PATH=~/software_projects/claude-configs
 
    # Settings
-   ln -sf $REPO_DIRECTORY_PATH/settings.json ~/.claude/settings.json
+   ln -sf "$REPO_DIRECTORY_PATH/settings.json" ~/.claude/settings.json
 
    # CLAUDE.md (global user instructions)
-   ln -sf $REPO_DIRECTORY_PATH/CLAUDE.md ~/.claude/CLAUDE.md
+   ln -sf "$REPO_DIRECTORY_PATH/CLAUDE.md" ~/.claude/CLAUDE.md
 
    # Commands
-   ln -sfn $REPO_DIRECTORY_PATH/commands ~/.claude/commands
+   ln -sfn "$REPO_DIRECTORY_PATH/commands" ~/.claude/commands
 
    # Hooks
-   ln -sfn $REPO_DIRECTORY_PATH/hooks ~/.claude/hooks
+   ln -sfn "$REPO_DIRECTORY_PATH/hooks" ~/.claude/hooks
 
    # Skills
-   ln -sfn $REPO_DIRECTORY_PATH/skills ~/.claude/skills
+   ln -sfn "$REPO_DIRECTORY_PATH/skills" ~/.claude/skills
 
    # Claude Desktop configs
-   ln -s $REPO_DIRECTORY_PATH/claude-desktop/claude_desktop_config.json ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   ln -s "$REPO_DIRECTORY_PATH/claude-desktop/claude_desktop_config.json" ~/Library/Application\ Support/Claude/claude_desktop_config.json
+
+   # Env vars for MCP servers
+   # -sf for files (creates/replaces a file symlink)
+   ln -sf "$REPO_DIRECTORY_PATH/.env" ~/.claude/mcp.env
+   chmod 600 ~/.claude/mcp.env
+
+   # MCP server version pins
+   ln -sf "$REPO_DIRECTORY_PATH/claude-desktop/mcp-versions.env" ~/.claude/mcp-versions.env
+
+   # MCP wrapper scripts
+   # -sfn for directories (replaces existing directory symlink cleanly)
+   ln -sfn "$REPO_DIRECTORY_PATH/claude-desktop/scripts" ~/.claude/scripts
+   chmod +x ~/.claude/scripts/*.sh
    ```
 
-   > **Note:** `ln -sfn` is used for directories so the symlink replaces any existing directory symlink cleanly.
+   > **Note:** `ln -sf` is used for files and `ln -sfn` is used for directories so the symlink replaces any existing directory symlink cleanly.
 
 4. **Verify**
 
