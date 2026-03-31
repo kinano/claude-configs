@@ -1,0 +1,18 @@
+---
+name: address-pr-comments
+description: Used to read PR comments on github and act on them
+disable-model-invocation: false
+---
+
+# Reads and addresses comments from humans and other agents on github
+
+1. Fetch the open PR for the current branch. If no PR exists, notify the human and stop. If multiple PRs exist, ask the human to select one.
+2. Fetch all unresolved comments. Distinguish between human comments and bot/automated comments — focus on human comments first.
+3. For each comment, assess its type:
+   - **Code change needed** (nit, low, medium, high severity): add to the implementation plan.
+   - **Discussion needed** (questions, architectural debates): flag for human review rather than acting on them.
+4. Present the plan to the human: show what will be changed, what needs discussion, and what will be ignored. Let the human decide (address all, address a subset, or ignore).
+5. Take actions based on human input. For discussion-type comments, post a reply in the PR thread rather than making a code change.
+6. Run `/review` to ensure changes are reviewed before committing. Then commit and push.
+7. Attempt to resolve addressed PR comment threads. Note: resolution may fail for threads you did not open depending on repo permissions — report any failures to the human.
+8. Re-request review from the original commenters or notify them via a PR comment that their feedback has been addressed.
