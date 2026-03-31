@@ -15,4 +15,4 @@ disable-model-invocation: false
 5. Take actions based on human input. For discussion-type comments, post a reply in the PR thread rather than making a code change.
 6. Run `/review` to ensure changes are reviewed before committing. Then commit and push.
 7. Attempt to resolve addressed PR comment threads. Note: resolution may fail for threads you did not open depending on repo permissions — report any failures to the human.
-8. Re-request review from the original commenters or notify them via a PR comment that their feedback has been addressed.
+8. Re-request review from the original commenters if they had requested changes or notify them via a PR comment that their feedback has been addressed.
