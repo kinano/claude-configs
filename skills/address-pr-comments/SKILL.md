@@ -16,3 +16,5 @@ disable-model-invocation: false
 6. Run `/review` to ensure changes are reviewed before committing. Then commit and push.
 7. Attempt to resolve addressed PR comment threads. Note: resolution may fail for threads you did not open depending on repo permissions — report any failures to the human.
 8. Re-request review from the original commenters if they had requested changes or notify them via a PR comment that their feedback has been addressed.
+9. After pushing, check CI status using `gh pr checks`. If any checks are failing, invoke `/resolve-ci-failures` to investigate and fix them.
+10. This skill covers one round of comments. If new comments arrive after this round is complete, the human should invoke this skill again.
