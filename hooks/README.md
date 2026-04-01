@@ -1,6 +1,6 @@
 # Repo-Aware Claude Code Hooks
 
-Auto-detect your project toolchain and run the right checks — no hardcoded commands.
+Auto-detect your project toolchain and run the right checks — no hardcoded commands. Inspired by [Claude Code official docs](https://code.claude.com/docs/en/hooks)
 
 ## Strategy: Fast Per-Edit Checks
 
