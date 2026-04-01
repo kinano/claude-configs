@@ -96,47 +96,20 @@ Shared configuration files for [Claude Code](https://docs.anthropic.com/en/docs/
 
 - [Claude Code Hooks](https://code.claude.com/docs/en/hooks)
 
-## Useful MCP Servers
+## Adding MCP Servers to a Project
 
-### dbt-mcp
+MCP servers are configured **per-project** via a `.mcp.json` file at the repo root — not globally. This means servers only load when Claude Code is running inside the relevant repo, so env vars and credentials don't need to be available everywhere.
 
-```
-# 1. Install pipx if you don't have it
-brew install pipx
-pipx ensurepath
+Use the `/add-mcp-server` skill to add an MCP server to any project. It will:
+- Create or update `.mcp.json` at the project root
+- Use `${VAR_NAME}` syntax for secrets (Claude Code expands these at runtime)
+- Add missing env vars to `.env` and ensure `.env` is gitignored
+- Keep `.mcp.json` safe to commit
 
-# 2. Install dbt-redshift
-PIPX_DEFAULT_PYTHON=$(pyenv prefix 3.12.9)/bin/python \
-  PIP_INDEX_URL=https://pypi.org/simple/ \
-  pipx install dbt-redshift --include-deps
+### Useful servers
 
-# 3. Verify installation
-dbt --version
-
-# Get/set the ENV VARs needed by your DBT project
-
-# 4. Add the dbt MCP server to Claude Code
-claude mcp add dbt \
-  -e DBT_PROJECT_DIR=/path/to/data-warehouse/dbt \
-  -e DBT_PATH=$(which dbt) \
-  -e ... \ Add all the DBT ENV VARs required by your DBT project
-  -- uvx dbt-mcp
-```
-
-### Langfuse MCP & CLI
-
-Inspired by [Hamel Husain's Evals Skills](https://hamel.dev/blog/posts/evals-skills/) for Claude Code.
-[Langfuse MCP Documentation](https://langfuse.com/docs/api-and-data-platform/features/mcp-server)
-
-```
-LANGFUSE_BASE_64_TOKEN=$(echo -n "$LANGFUSE_PUBLIC_KEY:$LANGFUSE_SECRET_KEY" | base64)
-
-claude mcp add --transport http langfuse https://us.cloud.langfuse.com/api/public/mcp \
-    --header "Authorization: Basic $LANGFUSE_BASE_64_TOKEN"
-```
-
-The Langfuse MCP server only includes prompts as of March 2026. An [easy alternative](https://github.com/orgs/langfuse/discussions/10605#discussioncomment-15799558) is to use langfuse-cli and wire it up as a tool ([github](https://github.com/langfuse/langfuse-cli)).
-
-```
-npx langfuse-cli get-skill
-```
+| Server | Install | Notes |
+|--------|---------|-------|
+| **dbt-mcp** | `uvx dbt-mcp` | Requires dbt installed via pipx. Env vars: `DBT_PROJECT_DIR`, `DBT_PATH`, plus project-specific DB credentials. |
+| **redshift** | `uvx awslabs.redshift-mcp-server` | Env vars: `AWS_PROFILE`, `AWS_REGION`. |
+| **Langfuse** | HTTP/SSE — `https://us.cloud.langfuse.com/api/public/mcp` | Auth header: `Authorization: Basic ${LANGFUSE_BASE_64_TOKEN}`. See [docs](https://langfuse.com/docs/api-and-data-platform/features/mcp-server). Alternatively, use [langfuse-cli](https://github.com/langfuse/langfuse-cli) as a skill: `npx langfuse-cli get-skill`. |
