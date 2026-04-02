@@ -1,6 +1,6 @@
 ---
-name: implement
-description: Used to implement code changes by spinning up agents to execute an approved implementation plan
+name: build-my-shit
+description: Used to build and execute an approved implementation plan by spinning up agents
 disable-model-invocation: false
 ---
 

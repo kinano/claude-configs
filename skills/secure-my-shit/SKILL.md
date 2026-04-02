@@ -1,5 +1,5 @@
 ---
-name: owasp-security
+name: secure-my-shit
 description: Use when reviewing code for security vulnerabilities, implementing authentication/authorization, handling user input, or discussing web application security. Covers OWASP Top 10:2025, ASVS 5.0, and Agentic AI security (2026).
 disable-model-invocation: false
 ---
@@ -613,4 +613,4 @@ Use this skill when:
 
 # Keeping this skill fresh
 
-Every month, please fetch the most recent version of the OWASP top 10 list. Ideally, you will use their website to fetch this information: https://owasp.org/www-project-top-ten/
+please fetch the most recent version of the OWASP top 10 list from their website: https://owasp.org/www-project-top-ten/
