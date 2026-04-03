@@ -49,7 +49,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/post-edit-check.sh"
+            "command": "$HOME/.claude/hooks/post-edit-check.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-check.sh"
           }
         ]
       }
@@ -57,7 +68,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
+    "command": "bash $HOME/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
     "evals-skills@hamelsmu-evals-skills": true,
@@ -77,6 +88,10 @@
         "repo": "awslabs/agent-plugins"
       }
     }
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": false
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "low",
