@@ -13,7 +13,7 @@ disable-model-invocation: false
    - **Discussion needed** (questions, architectural debates): flag for human review rather than acting on them.
 4. Present the plan to the human: show what will be changed, what needs discussion, and what will be ignored. Let the human decide (address all, address a subset, or ignore).
 5. Take actions based on human input. For discussion-type comments, post a reply in the PR thread rather than making a code change.
-6. Run `/critique-my-shit` to ensure changes are reviewed, committed, and pushed.
+6. Run `/critique` to ensure changes are reviewed, committed, and pushed.
 7. Attempt to resolve addressed PR comment threads. Note: resolution may fail for threads you did not open depending on repo permissions — report any failures to the human.
 8. Re-request review from the original commenters if they had requested changes or notify them via a PR comment that their feedback has been addressed.
 9. After pushing, check CI status using `gh pr checks`. If any checks are failing, invoke `/resolve-ci-failures` to investigate and fix them.

@@ -1,5 +1,5 @@
 ---
-name: build-my-shit
+name: build
 description: Used to build and execute an approved implementation plan by spinning up agents
 disable-model-invocation: false
 ---

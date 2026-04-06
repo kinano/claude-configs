@@ -17,5 +17,5 @@ disable-model-invocation: false
 4. Present a summary to the human: what failed, why, and your proposed fix for each. Explicitly wait for human approval before proceeding. Do not spin up agents until the human has confirmed the plan.
 5. Spin up an agent or team of agents (as appropriate for scope) to implement the approved fixes. Give each agent a focused task with a clear success criterion. No need to create a new branch or worktree — fixes go on the current branch.
 6. Once fixes are implemented, run the full project checks locally to verify. Note: per-file lint and type checks run automatically via hooks on every edit — focus this step on full-project commands (e.g. full typecheck, test suite) that hooks defer. Discover the correct commands from `AGENTS.md`, `package.json`, or `pyproject.toml` in the affected repo — do not guess.
-7. Run `/critique-my-shit` to review, commit, and push the fixes.
+7. Run `/critique` to review, commit, and push the fixes.
 8. Monitor the new CI run with `gh run watch` until it completes. If new failures appear, repeat from step 3.

@@ -1,5 +1,5 @@
 ---
-name: critique-my-shit
+name: critique
 description: Used to run githooks, perform code & plan reviews with expert critics, and commit/push verified changes
 disable-model-invocation: false
 ---
