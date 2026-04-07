@@ -18,6 +18,7 @@ disable-model-invocation: false
 
 - one generalist critic (good for simple tasks)
 - a team of critics who have expertise in the technology stacks being used and best security practices. The critics must create a markdown file to list their revisions sorted by severity (high first).
+- `/codex:review` plugin (run the codex review skill)
 - Manual review by the human.
 
 4. Prompt the human to select the next step from the following options:

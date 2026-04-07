@@ -73,7 +73,8 @@
   "enabledPlugins": {
     "evals-skills@hamelsmu-evals-skills": true,
     "code-review@claude-plugins-official": true,
-    "deploy-on-aws@agent-plugins-for-aws": true
+    "deploy-on-aws@agent-plugins-for-aws": true,
+    "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
     "hamelsmu-evals-skills": {
@@ -86,6 +87,12 @@
       "source": {
         "source": "github",
         "repo": "awslabs/agent-plugins"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
       }
     }
   },
