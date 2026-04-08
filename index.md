@@ -279,28 +279,49 @@ title: Farty Bobo
   /* ── MOBILE ── */
   @media (max-width: 800px) {
     .fb-hero {
-      flex-direction: column;
-      align-items: flex-start;
-      min-height: unset;
+      flex-direction: row;
+      align-items: stretch;
+      min-height: 100svh;
       padding-bottom: 0;
     }
 
+    /* mascot stays absolute, anchored bottom-right, LARGE */
     .fb-mascot-wrap {
-      position: relative;
-      right: auto; top: auto; bottom: auto;
-      width: 100%;
-      justify-content: center;
-      padding: 32px 0 0;
-      pointer-events: auto;
+      position: absolute;
+      right: -8vw; bottom: 0; top: auto;
+      width: 78vw;
+      height: auto;
+      display: flex; align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0;
     }
 
-    .fb-mascot { height: auto; width: clamp(220px, 80vw, 380px); }
+    .fb-mascot {
+      height: auto;
+      width: 100%;
+      filter:
+        drop-shadow(-10px 0 50px rgba(127,119,221,0.7))
+        drop-shadow(0 0 30px rgba(127,119,221,0.4));
+    }
 
-    .fb-left { max-width: 100%; padding: 40px 6vw 44px; }
+    /* text on top, left-aligned, takes ~65% width so it sits left of mascot */
+    .fb-left {
+      position: relative; z-index: 3;
+      max-width: 68vw;
+      width: 68vw;
+      padding: 52px 5vw 40px;
+      display: flex; flex-direction: column; gap: 0;
+      align-self: flex-start;
+      /* subtle fade-right so text stays readable over mascot glow */
+      background: linear-gradient(to right, rgba(13,11,30,0.85) 60%, transparent 100%);
+    }
 
-    .fb-tagline { font-size: clamp(3.2rem, 15vw, 5.5rem); }
+    .fb-tagline {
+      font-size: clamp(2.8rem, 13vw, 5rem);
+      margin-bottom: 20px;
+    }
 
-    .fb-desc { font-size: 0.9rem; max-width: 100%; }
+    .fb-desc { font-size: 0.82rem; max-width: 100%; line-height: 1.7; }
 
     .fb-content { grid-template-columns: 1fr; }
     .fb-section { border-right: none; }
