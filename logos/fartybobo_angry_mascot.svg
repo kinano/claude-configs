@@ -1,45 +1,87 @@
-<svg width="680" height="420" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
-<circle cx="215" cy="185" r="24" fill="#97C459" opacity="0.28"/>
-<circle cx="192" cy="162" r="20" fill="#97C459" opacity="0.22"/>
-<circle cx="200" cy="140" r="15" fill="#97C459" opacity="0.16"/>
-<circle cx="228" cy="205" r="17" fill="#97C459" opacity="0.22"/>
-<circle cx="185" cy="178" r="13" fill="#97C459" opacity="0.14"/>
-<circle cx="178" cy="148" r="10" fill="#97C459" opacity="0.1"/>
-<path d="M195 128 Q188 110 195 92" fill="none" stroke="#97C459" stroke-width="2.2" stroke-linecap="round" opacity="0.32"/>
-<path d="M212 115 Q205 97 212 80" fill="none" stroke="#97C459" stroke-width="2" stroke-linecap="round" opacity="0.26"/>
-<path d="M180 142 Q172 126 178 110" fill="none" stroke="#97C459" stroke-width="1.6" stroke-linecap="round" opacity="0.2"/>
-<circle cx="340" cy="168" r="92" fill="#7F77DD"/>
-<circle cx="340" cy="168" r="92" fill="none" stroke="#534AB7" stroke-width="2.5"/>
-<ellipse cx="340" cy="185" rx="56" ry="38" fill="#AFA9EC" opacity="0.3"/>
-<path d="M252 168 Q228 138 208 155" fill="none" stroke="#534AB7" stroke-width="9" stroke-linecap="round"/>
-<circle cx="205" cy="157" r="9" fill="#7F77DD"/>
-<path d="M428 168 Q458 128 478 108" fill="none" stroke="#534AB7" stroke-width="9" stroke-linecap="round"/>
-<path d="M478 108 L498 98 M478 108 L492 118 M478 108 L500 108" fill="none" stroke="#534AB7" stroke-width="4" stroke-linecap="round"/>
-<ellipse cx="315" cy="260" rx="20" ry="10" fill="#534AB7"/>
-<ellipse cx="365" cy="260" rx="20" ry="10" fill="#534AB7"/>
-<rect x="280" y="128" width="55" height="40" rx="6" fill="white" stroke="#26215C" stroke-width="3"/>
-<rect x="345" y="128" width="55" height="40" rx="6" fill="white" stroke="#26215C" stroke-width="3"/>
-<line x1="335" y1="148" x2="345" y2="148" stroke="#26215C" stroke-width="3"/>
-<line x1="280" y1="148" x2="268" y2="145" stroke="#26215C" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="400" y1="148" x2="412" y2="145" stroke="#26215C" stroke-width="2.5" stroke-linecap="round"/>
-<circle cx="307" cy="148" r="9" fill="#26215C"/>
-<circle cx="310" cy="145" r="3" fill="white"/>
-<circle cx="372" cy="148" r="9" fill="#26215C"/>
-<circle cx="375" cy="145" r="3" fill="white"/>
-<path d="M282 124 Q300 110 336 120" fill="none" stroke="#3C3489" stroke-width="4" stroke-linecap="round"/>
-<path d="M344 120 Q380 110 398 124" fill="none" stroke="#3C3489" stroke-width="4" stroke-linecap="round"/>
-<ellipse cx="340" cy="210" rx="38" ry="24" fill="#26215C"/>
-<ellipse cx="340" cy="205" rx="34" ry="16" fill="#3C3489"/>
-<path d="M310 195 Q340 185 370 195" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
-<ellipse cx="340" cy="222" rx="16" ry="8" fill="#D4537E"/>
-<path d="M308 192 L310 182" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-<path d="M328 188 L329 178" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-<path d="M352 188 L351 178" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-<path d="M372 192 L370 182" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-<circle cx="282" cy="185" r="13" fill="#F5C4B3" opacity="0.5"/>
-<circle cx="398" cy="185" r="13" fill="#F5C4B3" opacity="0.5"/>
-<path d="M365 80 L370 65 M375 82 L385 68 M385 86 L398 74" fill="none" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
-<path d="M305 82 L298 66 M295 86 L285 72" fill="none" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
-<text x="340" y="325" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="600" font-size="44" fill="#26215C" letter-spacing="3">FARTY</text>
-<text x="340" y="372" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="600" font-size="44" fill="#7F77DD" letter-spacing="3">BOBO</text>
+<svg width="680" height="440" viewBox="0 0 680 440" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gas cloud — big, visible -->
+  <circle cx="145" cy="220" r="38" fill="#97C459" opacity="0.3"/>
+  <circle cx="120" cy="190" r="30" fill="#97C459" opacity="0.25"/>
+  <circle cx="130" cy="155" r="22" fill="#97C459" opacity="0.2"/>
+  <circle cx="155" cy="248" r="25" fill="#97C459" opacity="0.22"/>
+  <circle cx="110" cy="165" r="16" fill="#97C459" opacity="0.15"/>
+  <circle cx="105" cy="135" r="12" fill="#97C459" opacity="0.12"/>
+  <!-- Gas wisps rising -->
+  <path d="M130 130 Q118 100 132 72" fill="none" stroke="#97C459" stroke-width="3" stroke-linecap="round" opacity="0.32"/>
+  <path d="M150 118 Q140 88 155 60" fill="none" stroke="#97C459" stroke-width="2.5" stroke-linecap="round" opacity="0.26"/>
+  <path d="M110 145 Q98 120 108 95" fill="none" stroke="#97C459" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+
+  <!-- Body shadow -->
+  <ellipse cx="340" cy="285" rx="72" ry="20" fill="#26215C" opacity="0.4"/>
+
+  <!-- Body (round blob body) -->
+  <ellipse cx="340" cy="250" rx="50" ry="36" fill="#6B63C4"/>
+  <ellipse cx="340" cy="250" rx="50" ry="36" fill="none" stroke="#534AB7" stroke-width="2"/>
+
+  <!-- Stubby legs -->
+  <ellipse cx="315" cy="282" rx="14" ry="8" fill="#534AB7"/>
+  <ellipse cx="365" cy="282" rx="14" ry="8" fill="#534AB7"/>
+
+  <!-- Left arm — raised fist -->
+  <path d="M290 240 Q255 210 235 180" fill="none" stroke="#534AB7" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="232" cy="176" r="14" fill="#7F77DD"/>
+  <circle cx="232" cy="176" r="14" fill="none" stroke="#534AB7" stroke-width="2"/>
+
+  <!-- Right arm — waving/pointing -->
+  <path d="M390 235 Q430 200 460 165" fill="none" stroke="#534AB7" stroke-width="11" stroke-linecap="round"/>
+  <!-- Pointing hand fingers -->
+  <path d="M460 165 L485 148 M460 165 L478 175 M460 165 L488 162" fill="none" stroke="#534AB7" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- HEAD — big angry face -->
+  <circle cx="340" cy="155" r="105" fill="#7F77DD"/>
+  <circle cx="340" cy="155" r="105" fill="none" stroke="#534AB7" stroke-width="3"/>
+  <!-- Belly highlight -->
+  <ellipse cx="340" cy="175" rx="64" ry="42" fill="#AFA9EC" opacity="0.22"/>
+
+  <!-- GLASSES — chunky, bold -->
+  <rect x="268" y="112" width="62" height="46" rx="8" fill="white" stroke="#26215C" stroke-width="4"/>
+  <rect x="342" y="112" width="62" height="46" rx="8" fill="white" stroke="#26215C" stroke-width="4"/>
+  <!-- Bridge -->
+  <line x1="330" y1="135" x2="342" y2="135" stroke="#26215C" stroke-width="4"/>
+  <!-- Temple arms -->
+  <line x1="268" y1="135" x2="250" y2="130" stroke="#26215C" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="404" y1="135" x2="422" y2="130" stroke="#26215C" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Pupils — looking at you -->
+  <circle cx="299" cy="135" r="12" fill="#26215C"/>
+  <circle cx="303" cy="131" r="4" fill="white"/>
+  <circle cx="373" cy="135" r="12" fill="#26215C"/>
+  <circle cx="377" cy="131" r="4" fill="white"/>
+
+  <!-- ANGRY EYEBROWS — thick, aggressive V -->
+  <path d="M264 108 Q290 90 336 105" fill="none" stroke="#3C3489" stroke-width="6" stroke-linecap="round"/>
+  <path d="M344 105 Q390 90 416 108" fill="none" stroke="#3C3489" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- SCREAMING MOUTH — wide open -->
+  <ellipse cx="340" cy="200" rx="44" ry="30" fill="#26215C"/>
+  <ellipse cx="340" cy="195" rx="38" ry="20" fill="#3C3489"/>
+  <!-- Teeth top -->
+  <path d="M306 185 L312 195 L318 185 L324 195 L330 185 L336 195 L342 185 L348 195 L354 185 L360 195 L366 185 L372 195 L378 185" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Tongue -->
+  <ellipse cx="340" cy="218" rx="20" ry="10" fill="#D4537E"/>
+  <!-- Saliva lines — he's YELLING -->
+  <path d="M300 185 L295 172" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M322 180 L320 168" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M358 180 L360 168" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M380 185 L385 172" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Blush cheeks -->
+  <circle cx="268" cy="178" r="16" fill="#F5C4B3" opacity="0.45"/>
+  <circle cx="412" cy="178" r="16" fill="#F5C4B3" opacity="0.45"/>
+
+  <!-- RAGE SPARKS — lots of them -->
+  <path d="M375 55 L382 35 M388 60 L400 40 M400 68 L418 50" fill="none" stroke="#E24B4A" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
+  <path d="M295 60 L285 40 M282 68 L268 50" fill="none" stroke="#E24B4A" stroke-width="3.5" stroke-linecap="round" opacity="0.6"/>
+  <!-- Impact lines radiating from head -->
+  <path d="M448 130 L472 122" fill="none" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+  <path d="M445 155 L468 155" fill="none" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <path d="M235 120 L212 110" fill="none" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- FARTY BOBO text -->
+  <text x="340" y="345" text-anchor="middle" font-family="Impact, Helvetica, Arial, sans-serif" font-weight="900" font-size="52" fill="#26215C" letter-spacing="5">FARTY</text>
+  <text x="340" y="400" text-anchor="middle" font-family="Impact, Helvetica, Arial, sans-serif" font-weight="900" font-size="52" fill="#7F77DD" letter-spacing="5">BOBO</text>
 </svg>
