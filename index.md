@@ -63,23 +63,14 @@ title: Farty Bobo
     pointer-events: none;
   }
 
-  /* mascot — full-height, anchored right, bleeds */
+  /* mascot — shared base; positioning scoped to desktop media query below */
   .fb-mascot-wrap {
-    position: absolute;
-    right: -4vw; top: 0; bottom: 0;
     display: flex; align-items: flex-end;
     pointer-events: none;
-    opacity: 0;
-    animation: fb-mascot-in 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s forwards;
   }
 
   .fb-mascot {
-    height: 95svh;
-    width: auto;
     display: block;
-    filter:
-      drop-shadow(-20px 0 80px rgba(127,119,221,0.6))
-      drop-shadow(0 0 40px rgba(127,119,221,0.3));
   }
 
   /* left content — hard right wall keeps text out of mascot's face */
@@ -276,23 +267,48 @@ title: Farty Bobo
     100% { text-shadow: none; transform: none; clip-path: none; }
   }
 
-  /* ── TABLET (800–1100px) — mascot smaller so it doesn't eat the text ── */
+  /* ── DESKTOP (>1100px) & TABLET (801–1100px) share absolute mascot layout ── */
+  @media (min-width: 801px) {
+    .fb-mascot-wrap {
+      position: absolute;
+      right: -4vw; top: 0; bottom: 0;
+      opacity: 0;
+      animation: fb-mascot-in 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s forwards;
+    }
+
+    .fb-mascot {
+      height: 95svh;
+      width: auto;
+      filter:
+        drop-shadow(-20px 0 80px rgba(127,119,221,0.6))
+        drop-shadow(0 0 40px rgba(127,119,221,0.3));
+    }
+  }
+
+  /* ── TABLET (801–1100px) — smaller mascot, wider text column ── */
   @media (min-width: 801px) and (max-width: 1100px) {
-    .fb-mascot { height: 70svh; }
+    .fb-mascot { height: 70svh; max-width: 50vw; }
     .fb-left { width: 56vw; max-width: 56vw; padding: 60px 5vw; }
     .fb-tagline { font-size: clamp(3.5rem, 7vw, 6rem); }
   }
 
-  /* ── MOBILE ── */
+  /* ── MOBILE (≤800px) ── */
   @media (max-width: 800px) {
     .fb-hero {
       flex-direction: column;
       align-items: stretch;
+      /* height + min-height so flex children can distribute the space */
+      height: 100svh;
+      min-height: 100svh;
+      /* svh fallback for older Android WebViews */
+      height: 100vh;
+      height: 100svh;
+      min-height: 100vh;
       min-height: 100svh;
       padding-bottom: 0;
+      overflow: visible; /* let mascot drop-shadow breathe */
     }
 
-    /* text full-width at top */
     .fb-left {
       position: relative; z-index: 3;
       width: 100%; max-width: 100%;
@@ -307,30 +323,26 @@ title: Farty Bobo
 
     .fb-desc { font-size: 0.88rem; max-width: 100%; line-height: 1.75; }
 
-    /* RESET all desktop absolute positioning — use normal flow */
+    /* normal flow — no absolute positioning, no !important needed */
     .fb-mascot-wrap {
-      position: relative !important;
-      right: auto !important;
-      top: auto !important;
-      bottom: auto !important;
-      left: auto !important;
-      transform: none !important;
-      /* kill entry animation — it conflicts with transform and leaves opacity:0 */
-      animation: none !important;
-      opacity: 1 !important;
+      position: relative;
       width: 100%;
       flex: 1;
-      display: flex;
-      align-items: flex-end;
       justify-content: center;
-      min-height: 220px;
+      /* cancel desktop animation — explicit transition:none prevents Safari flash */
+      animation: none;
+      transition: none;
+      opacity: 1;
+      min-height: 160px; /* safe floor at 320px viewports */
     }
 
     .fb-mascot {
-      width: 86vw;
-      height: auto;
-      max-height: 52svh;
-      object-fit: contain;
+      /* height-driven sizing: width follows aspect ratio, capped at 86vw */
+      height: 52svh;
+      height: 52vh; /* fallback */
+      height: 52svh;
+      width: auto;
+      max-width: 86vw;
       filter:
         drop-shadow(0 -16px 50px rgba(127,119,221,0.9))
         drop-shadow(0 0 30px rgba(127,119,221,0.5));
