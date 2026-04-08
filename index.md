@@ -50,7 +50,10 @@ title: Farty Bobo
   .fb-hero {
     position: relative; z-index: 1;
     width: 100%; min-height: 100svh;
-    display: flex; align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    align-items: stretch;
     overflow: hidden;
   }
 
@@ -63,43 +66,35 @@ title: Farty Bobo
     pointer-events: none;
   }
 
-  /* mascot — full-height, anchored right, bleeds */
+  /* left content */
+  .fb-left {
+    position: relative; z-index: 2;
+    padding: 72px 6vw;
+    display: flex; flex-direction: column; gap: 0;
+    justify-content: center;
+  }
+
+  /* mascot — right column, fills its lane */
   .fb-mascot-wrap {
-    position: absolute;
-    right: -4vw; top: 0; bottom: 0;
-    display: flex; align-items: flex-end;
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-end; justify-content: center;
     pointer-events: none;
+    overflow: hidden;
     opacity: 0;
     animation: fb-mascot-in 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s forwards;
   }
 
   .fb-mascot {
-    height: 95svh;
-    width: auto;
+    width: 100%;
+    max-width: 640px;
+    height: auto;
+    max-height: 95svh;
+    object-fit: contain;
+    align-self: flex-end;
     display: block;
     filter:
       drop-shadow(-20px 0 80px rgba(127,119,221,0.6))
       drop-shadow(0 0 40px rgba(127,119,221,0.3));
-  }
-
-  /* left content */
-  .fb-left {
-    position: relative; z-index: 2;
-    padding: 72px 6vw;
-    max-width: min(58vw, calc(100% - 320px));
-    display: flex; flex-direction: column; gap: 0;
-  }
-
-  /* medium: mascot goes behind text, text gets full readable width */
-  @media (max-width: 1100px) and (min-width: 961px) {
-    .fb-left { max-width: 60vw; }
-    .fb-mascot-wrap { opacity: 0; right: -8vw; animation: fb-mascot-in-fade 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s forwards; }
-    .fb-mascot { height: 80svh; filter: drop-shadow(-20px 0 80px rgba(127,119,221,0.6)) drop-shadow(0 0 40px rgba(127,119,221,0.3)) opacity(0.5); }
-  }
-
-  @keyframes fb-mascot-in-fade {
-    from { opacity: 0; transform: translateX(60px) rotate(4deg); }
-    to   { opacity: 0.45; transform: translateX(0) rotate(0deg); }
   }
 
   .fb-label {
@@ -290,22 +285,20 @@ title: Farty Bobo
   /* ── MOBILE ── */
   @media (max-width: 960px) {
     .fb-hero {
-      flex-direction: column;
-      align-items: flex-start;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
       min-height: unset;
-      padding-bottom: 0;
     }
 
+    .fb-left { padding: 40px 6vw 32px; justify-content: flex-start; }
+
     .fb-mascot-wrap {
-      position: relative;
-      right: auto; top: auto; bottom: auto;
-      width: 100%;
       justify-content: center;
-      padding: 32px 0 0;
+      padding: 0 0 0;
       pointer-events: auto;
     }
 
-    .fb-mascot { height: auto; width: clamp(240px, 65vw, 460px); }
+    .fb-mascot { width: clamp(240px, 70vw, 480px); max-height: none; align-self: center; }
 
     .fb-left { max-width: 100%; padding: 40px 6vw 44px; }
 
