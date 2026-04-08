@@ -29,12 +29,4 @@
 <text x="290" y="105" font-family="Helvetica, Arial, sans-serif" font-weight="600" font-size="52" letter-spacing="2">
   <tspan fill="#7F77DD">farty</tspan><tspan fill="#26215C">bobo</tspan>
 </text>
-<!-- Divider and palette -->
-<line x1="120" y1="155" x2="560" y2="155" stroke="#D3D1C7" stroke-width="0.5"/>
-<text x="120" y="182" font-family="Helvetica, Arial, sans-serif" font-weight="400" font-size="12" fill="#888780">Brand colors</text>
-<rect x="120" y="192" width="40" height="20" rx="4" fill="#7F77DD"/>
-<rect x="168" y="192" width="40" height="20" rx="4" fill="#534AB7"/>
-<rect x="216" y="192" width="40" height="20" rx="4" fill="#97C459"/>
-<rect x="264" y="192" width="40" height="20" rx="4" fill="#26215C"/>
-<rect x="312" y="192" width="40" height="20" rx="4" fill="#E24B4A"/>
 </svg>
