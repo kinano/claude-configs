@@ -20,9 +20,9 @@ Shared [Claude Code](https://docs.anthropic.com/en/docs/claude-code) configurati
 ## Quick Setup
 
 ```sh
-git clone https://github.com/kinanfarah/farty-bobo ~/dev/farty-bobo
+git clone https://github.com/fartybobo/farty-bobo ~/dev/farty-bobo
 cd ~/dev/farty-bobo
 ./setup.sh
 ```
 
-See the [README](https://github.com/kinanfarah/farty-bobo) for full setup instructions.
+See the [README](https://github.com/fartybobo/farty-bobo) for full setup instructions.
