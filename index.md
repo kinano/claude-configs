@@ -5,14 +5,7 @@ title: Farty Bobo
 
 <style>
   /* ── Reset Midnight theme noise ── */
-  body { background: #0a0a0a !important; }
   #main_content_wrap, #main_content { background: transparent !important; border: none !important; box-shadow: none !important; }
-  header { display: none !important; }
-  #header_wrap { display: none !important; }
-  footer { display: none !important; }
-  #footer_wrap { display: none !important; }
-  #main_content_wrap { padding: 0 !important; }
-  #main_content { padding: 0 !important; max-width: 100% !important; }
 
   /* ── Tokens ── */
   :root {
@@ -40,11 +33,10 @@ title: Farty Bobo
   /* ── HERO ── */
   .fb-hero {
     position: relative;
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 60px 6vw 80px;
+    padding: 80px 6vw;
     border-bottom: 3px solid var(--yellow);
     overflow: hidden;
   }
@@ -69,7 +61,6 @@ title: Farty Bobo
     display: flex;
     align-items: center;
     gap: 6vw;
-    max-width: 1200px;
   }
 
   .fb-mascot {
@@ -116,9 +107,7 @@ title: Farty Bobo
 
   /* ── CONTENT ── */
   .fb-content {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 80px 6vw 120px;
+    padding: 60px 6vw 100px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px;
