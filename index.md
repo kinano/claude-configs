@@ -82,11 +82,12 @@ title: Farty Bobo
       drop-shadow(0 0 40px rgba(127,119,221,0.3));
   }
 
-  /* left content */
+  /* left content — hard right wall keeps text out of mascot's face */
   .fb-left {
     position: relative; z-index: 2;
     padding: 72px 6vw;
-    max-width: 58vw;
+    width: 52vw;
+    max-width: 52vw;
     display: flex; flex-direction: column; gap: 0;
   }
 
@@ -104,7 +105,7 @@ title: Farty Bobo
   /* tagline with occasional glitch */
   .fb-tagline {
     font-family: var(--font-display);
-    font-size: clamp(4.5rem, 10vw, 12rem);
+    font-size: clamp(4rem, 8.5vw, 9rem);
     line-height: 0.88;
     color: var(--lime);
     text-transform: uppercase;
@@ -276,7 +277,7 @@ title: Farty Bobo
   }
 
   /* ── MOBILE ── */
-  @media (max-width: 720px) {
+  @media (max-width: 800px) {
     .fb-hero {
       flex-direction: column;
       align-items: flex-start;
