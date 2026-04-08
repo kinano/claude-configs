@@ -5,7 +5,7 @@ title: Farty Bobo
 
 <img src="{{ '/logos/fartybobo_angry_mascot.svg' | relative_url }}" alt="Farty Bobo mascot" width="200" height="124" />
 
-# Farty Bobo
+# Farty Bobo — *We Got the f\*\*\*ing Gas*
 
 Shared [Claude Code](https://docs.anthropic.com/en/docs/claude-code) configuration files, hooks, and skills. Clone and symlink to get a fully configured Claude Code environment on any machine.
 
