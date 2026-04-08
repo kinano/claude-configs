@@ -90,25 +90,29 @@ title: Farty Bobo
     display: flex; flex-direction: column; gap: 0;
   }
 
-  .fb-wordmark {
-    width: clamp(260px, 38vw, 580px);
-    margin-bottom: 20px;
+  .fb-label {
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2vw, 1.6rem);
+    color: var(--purple);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
     opacity: 0;
-    animation: fb-slide-up 0.6s cubic-bezier(0.22,1,0.36,1) 0.05s forwards;
+    animation: fb-slide-up 0.5s cubic-bezier(0.22,1,0.36,1) 0.05s forwards;
   }
 
   /* tagline with occasional glitch */
   .fb-tagline {
     font-family: var(--font-display);
-    font-size: clamp(4rem, 9.5vw, 10.5rem);
-    line-height: 0.9;
+    font-size: clamp(4.5rem, 10vw, 12rem);
+    line-height: 0.88;
     color: var(--lime);
     text-transform: uppercase;
     letter-spacing: -0.01em;
-    margin-bottom: 32px;
+    margin-bottom: 36px;
     opacity: 0;
     animation:
-      fb-slam 0.5s cubic-bezier(0.22,1,0.36,1) 0.25s forwards,
+      fb-slam 0.5s cubic-bezier(0.22,1,0.36,1) 0.2s forwards,
       fb-glitch 8s steps(1) 2s infinite;
   }
 
@@ -311,11 +315,7 @@ title: Farty Bobo
     <div class="fb-hero-bg"></div>
 
     <div class="fb-left">
-      <img
-        class="fb-wordmark"
-        src="{{ '/logos/fartybobo_angry_wordmark.svg' | relative_url }}"
-        alt="Farty Bobo"
-      />
+      <p class="fb-label">Farty Bobo</p>
       <p class="fb-tagline">We Got the<br>F***ing Gas</p>
       <p class="fb-desc">
         Every machine you own is a different hellscape of broken configs and
