@@ -260,7 +260,6 @@ Populate the `prior_discussions` array in the Output Contract for every prior co
 | **MEDIUM** | Real improvement, not blocking. Author should address or explicitly accept risk. |
 | **LOW / NIT** | Style, naming, minor cleanup. Don't block merge over these. |
 | **QUESTION** | Unclear intent — ask before judging. |
-| **PRAISE** | Something done especially well. Say it. |
 
 Do not manufacture findings to look thorough. If the code is good, say so.
 
