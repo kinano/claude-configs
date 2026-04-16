@@ -41,7 +41,7 @@ disable-model-invocation: false
 
 7b. **Bot review loop (draft PRs only).**
 
-   This step only applies when the PR was opened as a **draft**. If the PR is not a draft, skip to Step 8.
+   This step only applies when the PR was opened as a **draft**. If the PR is not a draft, skip to Step 8. **If `/critique` was invoked recursively from within this loop (e.g., by `/address-pr-comments` or `/resolve-ci-failures`), skip Step 7b entirely** — the bot loop is already running in the parent invocation.
 
    After the draft PR is open, wait for automated reviewers (bots, linters, CI) to post their feedback:
 

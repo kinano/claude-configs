@@ -61,7 +61,7 @@ Use `gh` and the GitHub search API to find open PRs by the user's teammates that
 
    d. Keep only PRs where **all** of the following are true:
       - `isDraft: false`
-      - `reviewDecision` is `"REVIEW_REQUIRED"` or `""` (empty = no decision yet) or `"APPROVED"` (already approved by others but may still need your review)
+      - `reviewDecision` is NOT excluded — include all values: `"REVIEW_REQUIRED"`, `""` (empty), `"APPROVED"`, and `"CHANGES_REQUESTED"` (someone else may have requested changes — you still need to review)
 
    e. **Skip PRs where the current user is already waiting on the author:**
       - If the current user's most recent review `state` is `CHANGES_REQUESTED`, AND
@@ -69,8 +69,8 @@ Use `gh` and the GitHub search API to find open PRs by the user's teammates that
       - Then **exclude** this PR — it's waiting on the author to push changes, not on you to re-review
       - If the author has pushed new commits after your CHANGES_REQUESTED review, **include** it — it needs a follow-up review
 
-5. **Bucket by requester type:**
-   - **Your individual review:** PRs where `reviewRequests` contains the current user's login (`gh api user --jq .login`)
+5. **Bucket by requester type** (reuse the current user's login from step 4a — do not fetch it again):**
+   - **Your individual review:** PRs where `reviewRequests` contains the current user's login
    - **Team approval:** PRs with `REVIEW_REQUIRED` but no individual review request for you — these are waiting on a team
 
 6. **Present the list to the user** grouped by author and bucket, with URLs. If any PRs were skipped because the current user is waiting on the author, list them separately:
@@ -259,7 +259,8 @@ Populate the `prior_discussions` array in the Output Contract for every prior co
 | **HIGH** | Serious design or reliability issue. Should fix; discuss if deferring. |
 | **MEDIUM** | Real improvement, not blocking. Author should address or explicitly accept risk. |
 | **LOW / NIT** | Style, naming, minor cleanup. Don't block merge over these. |
-| **QUESTION** | Unclear intent — ask before judging.
+| **QUESTION** | Unclear intent — ask before judging. |
+| **PRAISE** | Something done especially well. Say it. |
 
 Do not manufacture findings to look thorough. If the code is good, say so.
 
