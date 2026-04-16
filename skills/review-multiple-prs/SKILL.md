@@ -61,8 +61,7 @@ Use `gh` and the GitHub search API to find open PRs by the user's teammates that
 
    d. Keep only PRs where **all** of the following are true:
       - `isDraft: false`
-      - `reviewDecision` is `"REVIEW_REQUIRED"` or `""` (empty = no decision yet)
-      - `reviewDecision` is NOT `"APPROVED"`
+      - `reviewDecision` is `"REVIEW_REQUIRED"` or `""` (empty = no decision yet) or `"APPROVED"` (already approved by others but may still need your review)
 
    e. **Skip PRs where the current user is already waiting on the author:**
       - If the current user's most recent review `state` is `CHANGES_REQUESTED`, AND
