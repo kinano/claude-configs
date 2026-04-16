@@ -41,7 +41,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opusplan",
+  "model": "opus[1m]",
   "hooks": {
     "PostToolUse": [
       {
@@ -102,9 +102,9 @@
     "failIfUnavailable": false
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "low",
-  "voiceEnabled": true,
+  "effortLevel": "high",
   "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
   "skills": {
     "langfuse": {
       "type": "command",

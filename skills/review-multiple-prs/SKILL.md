@@ -75,12 +75,22 @@ Each agent receives a self-contained prompt with:
 1. The PR number, repo (`{owner}/{repo}`), and `is_draft` flag.
 2. Instructions to:
    - Fetch the diff: `gh pr diff <number>` — save this output; it is the authoritative source of changed lines for inline comment line numbers
-   - Read the PR metadata and comments: `gh pr view <number> --comments`
+   - Read the PR metadata and conversation comments: `gh pr view <number> --comments`
+   - Fetch **formal review state** — this is critical, `--comments` does NOT include formal reviews:
+     ```
+     gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '.[] | {user: .user.login, state: .state, body: .body}'
+     ```
+     This returns `APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`, `DISMISSED`, or `PENDING` per reviewer. A `DISMISSED` review means a maintainer overrode it — note who dismissed and why.
+   - Fetch **inline review thread comments** (these are separate from PR conversation comments):
+     ```
+     gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | {user: .user.login, path: .path, line: .line, body: .body, created_at: .created_at}'
+     ```
+   - Read all of the above **before forming any verdict** — see the mandatory "Prior Discussion & Deferred Decisions" dimension in Step 3
    - Check CI: `gh pr checks <number>` — note that this only shows current run state; to assess whether failures are pre-existing, also run `gh pr checks <base-branch>` or `gh pr checks $(gh pr view <number> --json baseRefName -q .baseRefName)` for comparison. If base-branch checks are also failing, mark `ci_failures_introduced_by_pr: false`.
    - Read the linked Jira ticket via the Atlassian MCP if a ticket key is found in the branch name or PR description
    - Read surrounding code for any renamed functions, changed contracts, or modified public APIs
 3. **For stacked PRs only:** the raw output of `gh pr diff <prior-number>` from the prior agent — passed verbatim, not summarized — so the agent understands what the prior layer changed and can attribute findings to the correct PR.
-4. **Draft PR behavior:** if `is_draft: true`, the agent must still review and produce findings, but must set `verdict: "COMMENT"` unconditionally. It should still post inline comments (authors expect feedback on drafts) but the summary must clearly label the PR as a draft.
+4. **Draft PR behavior:** if `is_draft: true`, the agent must still review and produce findings, but must set `verdict: "COMMENT"` unconditionally. It should post inline comments on Github (authors expect feedback on drafts) but the summary must clearly label the PR as a draft.
 5. The review dimensions to evaluate (see Step 3 below)
 6. The finding severity scale (see Step 4 below)
 7. Instructions to **return findings as structured JSON** (see Output Contract below)
@@ -106,6 +116,17 @@ Each agent must return a JSON object with exactly these fields:
       "file": "path/to/file.ts",
       "line": 42,
       "body": "..."
+    }
+  ],
+  "prior_discussions": [
+    {
+      "author": "<github username of the person who raised the concern>",
+      "summary": "brief description of the prior comment or concern",
+      "status": "accepted | unresolved | addressed_in_code",
+      "original_severity": "BLOCKER | HIGH | MEDIUM | LOW | QUESTION",
+      "file": "path/to/file.ts (optional — only if the concern was about a specific file)",
+      "line": 42,
+      "reasoning": "why this status was assigned — e.g. 'reviewer replied OK to defer' or 'no response from reviewer after author acknowledged'"
     }
   ],
   "summary": "2–4 sentence summary of what the PR does and overall quality"
@@ -145,6 +166,61 @@ Each agent evaluates:
 - Do existing tests still make sense? Are mocks hiding real integration issues?
 - Edge cases covered?
 
+### Prior Discussion & Deferred Decisions
+
+Agents **must** complete this section before forming a verdict. Omitting it is a review failure — populate the `prior_discussions` array in the Output Contract even if empty.
+
+#### Data sources
+
+Use **all three** data sources together — each one shows different things:
+
+| Source | What it shows | Command |
+|--------|--------------|---------|
+| PR conversation comments | Top-level discussion | `gh pr view <number> --comments` |
+| Formal review state | `APPROVED`, `CHANGES_REQUESTED`, `DISMISSED` per reviewer | `gh api repos/{owner}/{repo}/pulls/{number}/reviews` |
+| Inline review thread comments | Line-level reviewer concerns | `gh api repos/{owner}/{repo}/pulls/{number}/comments` |
+
+#### Identifying deferred or prior concerns
+
+Scan **reviewer comment threads** (not PR description, not commit messages) for phrases that indicate deferral: "we'll fix this later", "out of scope for this PR", "follow-up ticket", "known issue", "accepted risk", or similar.
+
+Do **not** treat the following as deferral signals:
+- `TODO` comments in the code diff (those are code annotations, not reviewer deferrals)
+- Language in the PR description or commit messages authored by the PR submitter (that's the author pre-framing, not a reviewer decision)
+- Emoji reactions (thumbs-up, etc.) — these carry no formal semantic weight and must not be used to classify deferral status
+
+#### Assigning severity to prior concerns
+
+Prior reviewer comments do not use this skill's severity taxonomy. When a prior concern has no explicit severity, assign one based on impact:
+- A concern about correctness, data loss, or security → `BLOCKER` or `HIGH`
+- A concern about design, maintainability, or missing tests → `MEDIUM`
+- A concern about style, naming, or minor cleanup → `LOW`
+
+Document your severity assignment and reasoning in the `reasoning` field of the `prior_discussions` entry.
+
+#### Status classification rules
+
+| Status | Criteria |
+|--------|----------|
+| **accepted** | The **reviewer who raised the concern** (not the author) explicitly accepted the deferral — e.g., replied "OK to defer", "fine for now", submitted a new `APPROVED` review after discussion. Author acknowledgment alone is **not** sufficient. If the reviewer went silent after the author acknowledged, classify as `unresolved` — reviewer silence does not equal acceptance. |
+| **addressed_in_code** | The concern was addressed by a code change. **You must verify this** — cross-reference the PR diff to confirm the fix is actually present. A comment saying "fixed" or "done" without a corresponding code change means the status is `unresolved`, not `addressed_in_code`. |
+| **unresolved** | Anything else: no reply, author disputed it without reviewer resolution, reviewer went silent, or the formal review state is still `CHANGES_REQUESTED` and not `DISMISSED`. |
+
+#### Formal review state handling
+
+- If a reviewer's formal review state is `CHANGES_REQUESTED` and has **not** been `DISMISSED`: that review is still active. Check whether the specific concerns raised in that review have been addressed in code or accepted by the reviewer.
+- If a review was `DISMISSED`: note who dismissed it (the reviewer themselves, or a maintainer). A maintainer-dismissed review without a replacement approval should still be surfaced as a prior discussion — it may indicate an override that the human reviewer should see.
+
+#### Verdict interaction
+
+- **Any single `unresolved` prior concern with `original_severity` of BLOCKER prevents an `APPROVE` verdict.** This is absolute.
+- `unresolved` HIGHs should result in `REQUEST_CHANGES` unless you have strong evidence the concern is stale (e.g., the code it referenced no longer exists in the diff). If downgrading a stale concern, document why in the `reasoning` field.
+- **Draft PR precedence:** if `is_draft: true`, the verdict remains `COMMENT` regardless of unresolved prior concerns. However, the prior discussions must still be surfaced and classified — the draft status overrides the verdict, not the analysis.
+
+#### What to surface
+
+Populate the `prior_discussions` array in the Output Contract for every prior concern found. Include a dedicated **"Prior Discussions"** subsection in the review output listing each item, its status, original severity, and your reasoning.
+
 ### Performance (only if relevant)
 - Obvious N+1 queries, unnecessary loops, unindexed DB calls?
 - Heavy computation in request paths?
@@ -157,8 +233,7 @@ Each agent evaluates:
 | **HIGH** | Serious design or reliability issue. Should fix; discuss if deferring. |
 | **MEDIUM** | Real improvement, not blocking. Author should address or explicitly accept risk. |
 | **LOW / NIT** | Style, naming, minor cleanup. Don't block merge over these. |
-| **QUESTION** | Unclear intent — ask before judging. |
-| **PRAISE** | Something done especially well. Say it. |
+| **QUESTION** | Unclear intent — ask before judging.
 
 Do not manufacture findings to look thorough. If the code is good, say so.
 
@@ -186,6 +261,12 @@ File format:
 <3–6 sentence plain-English description of what the PR actually does — not the PR description copy-pasted, but your own read of the diff. What files changed, what behavior changed, what was added or removed.>
 
 ### Proposed Comments
+
+#### Prior Discussions
+
+| Author | Summary | Status | Orig. Severity | Reasoning |
+|--------|---------|--------|---------------|-----------|
+| @reviewer-login | brief description of concern | accepted / unresolved / addressed_in_code | BLOCKER / HIGH / MEDIUM / LOW | why this status was assigned |
 
 #### Inline Comments
 
@@ -242,7 +323,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --field "comments[][path]=path/to/file.ts" \
   --field "comments[][line]=42" \
   --field "comments[][side]=RIGHT" \
-  --field "comments[][body]=Farty Bobo {VERB}: <finding>"
+  --field "comments[][body]=Farty Bobo says: <finding>"
 ```
 
 Post inline comments for all PRs before writing the consolidated summary.
@@ -282,6 +363,9 @@ _(Draft PR — full review pending merge readiness)_  ← include only if is_dra
 #### What's Good
 - <something done well>
 
+#### Prior Discussions
+- `@reviewer-login` — <summary of concern> — **status:** accepted / unresolved / addressed_in_code — **severity:** BLOCKER / HIGH / MEDIUM / LOW — <reasoning>
+
 ---
 _Reviewed by Farty Bobo_
 ```
@@ -319,9 +403,11 @@ Only include sections with content. Omit empty sections.
 
 ### Verdict rules (per PR)
 
-- `APPROVE` — no BLOCKERs or HIGHs, CI passing (or failures pre-existing on base)
-- `REQUEST_CHANGES` — one or more BLOCKERs or HIGHs introduced by this PR
-- `COMMENT` — draft PR, questions only, or observations with no blocking concerns
+- `APPROVE` — no BLOCKERs or HIGHs (including unresolved prior concerns with original severity BLOCKER or HIGH), CI passing (or failures pre-existing on base)
+- `REQUEST_CHANGES` — one or more BLOCKERs or HIGHs introduced by this PR, OR one or more unresolved prior concerns with original severity BLOCKER or HIGH
+- `COMMENT` — draft PR (overrides all other verdicts — see below), questions only, or observations with no blocking concerns
+
+**Draft PR precedence:** if `is_draft: true`, the verdict is always `COMMENT` regardless of unresolved prior concerns. Prior discussions are still analyzed and surfaced in the output — the draft status overrides the verdict, not the analysis.
 
 ## Step 8 — Notify the user
 
