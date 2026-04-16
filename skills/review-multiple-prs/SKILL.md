@@ -328,51 +328,13 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
 
 Post inline comments for all PRs before writing the consolidated summary.
 
-## Step 7 — Post consolidated summary
+## Step 7 — Summary delivery
 
-After all inline comments are posted, post a **single top-level comment on each PR** with that PR's individual summary. Use the content from the approved draft file.
+**Do NOT post any summary comments to GitHub PRs.** No per-PR summary comment. No cross-PR summary comment. Summary comments are noisy and redundant — the inline comments already convey the findings where they matter (on the code).
 
-**Do NOT post the cross-PR summary to any PR.** The cross-PR summary exists only in the draft review file (Step 5) for the human reviewer's benefit. It must never be posted as a GitHub comment — it references PRs across different repos and authors who have no context for it, and it creates noise on unrelated PRs.
-
-### Per-PR comment format
-
-```
-## Farty Bobo's Code Review
-
-**Verdict:** APPROVE / REQUEST_CHANGES / COMMENT
-_(Draft PR — full review pending merge readiness)_  ← include only if is_draft: true
-
-### Summary
-<2–4 sentences>
-
-### Findings
-
-#### BLOCKER
-- `path/to/file.ts:42` — <finding>
-
-#### HIGH
-- `path/to/file.ts:42` — <finding>
-
-#### MEDIUM
-- ...
-
-#### LOW / NIT
-- ...
-
-#### Questions
-- ...
-
-#### What's Good
-- <something done well>
-
-#### Prior Discussions
-- `@reviewer-login` — <summary of concern> — **status:** accepted / unresolved / addressed_in_code — **severity:** BLOCKER / HIGH / MEDIUM / LOW — <reasoning>
-
----
-_Reviewed by Farty Bobo_
-```
-
-Only include sections that have entries. Omit empty sections entirely.
+All summary information (per-PR verdicts, cross-PR analysis) lives in:
+1. The **draft review file** (Step 5) — for the human reviewer to read before approving
+2. The **conversation** (Step 8) — relayed directly to the user after posting
 
 ### Cross-PR summary format (draft file only — never posted to GitHub)
 
