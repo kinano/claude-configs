@@ -25,13 +25,14 @@ gh search prs \
   --author="@me" \
   --state=open \
   --review=approved \
-  --json number,title,url,repository,author,createdAt,updatedAt,isDraft,reviewDecision,labels \
+  --json number,title,url,repository,author,createdAt,updatedAt,isDraft,labels \
   --limit 100
 ```
 
 Notes:
 
 - `--review=approved` surfaces PRs whose current review decision is APPROVED. It does **not** include PRs with `CHANGES_REQUESTED` still outstanding, which is the behavior we want.
+- Do NOT add `reviewDecision` to the `--json` list above — `gh search prs` rejects it ("Unknown JSON field: reviewDecision"). The `--review=approved` filter already enforces the approval state, and the per-PR enrichment in step 3 pulls reviewer detail from `gh pr view` instead.
 - Draft PRs can technically carry an approval. Exclude `isDraft: true` entries from the default report; mention them only if the caller asked to include drafts.
 - If the scope is "current repo", add `--repo {owner}/{name}` resolved from `git remote get-url origin`.
 - If the scope is an owner/org, add `--owner {name}`.
