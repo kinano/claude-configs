@@ -2,8 +2,8 @@ title: Farty Bobo
 description: >-
   Opinionated Claude Code configuration that actually works. Skills, hooks,
   settings, and MCP servers — clone it, symlink it, stop suffering.
-url: "https://fartybobo.github.io"
-baseurl: "/farty-bobo"
+url: "https://fartybobo.com"
+baseurl: ""
 markdown: kramdown
 
 plugins:

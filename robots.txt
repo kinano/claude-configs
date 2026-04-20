@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://fartybobo.github.io/farty-bobo/sitemap.xml
+Sitemap: https://fartybobo.com/sitemap.xml
