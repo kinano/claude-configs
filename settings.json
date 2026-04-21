@@ -64,6 +64,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/refresh-links.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
