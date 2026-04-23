@@ -1,0 +1,104 @@
+<svg width="680" height="520" viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg">
+
+  <style>
+    .fb-label { font-family: Impact, 'Arial Black', Helvetica, sans-serif; font-weight: 900; letter-spacing: 4px; }
+  </style>
+
+  <!-- Gas cloud left -->
+  <circle cx="138" cy="240" r="42" fill="#97C459" opacity="0.28"/>
+  <circle cx="112" cy="208" r="32" fill="#97C459" opacity="0.22"/>
+  <circle cx="122" cy="170" r="24" fill="#97C459" opacity="0.18"/>
+  <circle cx="148" cy="268" r="28" fill="#97C459" opacity="0.20"/>
+  <circle cx="100" cy="182" r="18" fill="#97C459" opacity="0.14"/>
+  <path d="M118 148 Q105 118 120 88" fill="none" stroke="#97C459" stroke-width="3" stroke-linecap="round" opacity="0.30"/>
+  <path d="M140 136 Q128 106 144 78" fill="none" stroke="#97C459" stroke-width="2.5" stroke-linecap="round" opacity="0.24"/>
+  <path d="M100 162 Q88 136 100 110" fill="none" stroke="#97C459" stroke-width="2" stroke-linecap="round" opacity="0.18"/>
+
+  <!-- Body shadow -->
+  <ellipse cx="340" cy="410" rx="90" ry="18" fill="#26215C" opacity="0.30"/>
+
+  <!-- STRAITJACKET BODY -->
+  <rect x="258" y="268" width="164" height="120" rx="18" fill="#D4C9A0"/>
+  <rect x="258" y="268" width="164" height="120" rx="18" fill="none" stroke="#A89E72" stroke-width="2.5"/>
+
+  <!-- Jacket center seam -->
+  <line x1="340" y1="268" x2="340" y2="388" stroke="#A89E72" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.6"/>
+
+  <!-- Jacket collar / lapels -->
+  <path d="M290 268 Q310 290 340 282 Q370 290 390 268" fill="#BDB28A" stroke="#A89E72" stroke-width="1.5"/>
+
+  <!-- CROSSED ARMS -->
+  <!-- Right arm sleeve wrapping left -->
+  <path d="M410 305 Q380 310 345 330 Q310 348 270 352" fill="none" stroke="#D4C9A0" stroke-width="28" stroke-linecap="round"/>
+  <path d="M410 305 Q380 310 345 330 Q310 348 270 352" fill="none" stroke="#A89E72" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Left arm sleeve wrapping right -->
+  <path d="M270 330 Q305 318 340 310 Q375 302 415 316" fill="none" stroke="#D4C9A0" stroke-width="28" stroke-linecap="round"/>
+  <path d="M270 330 Q305 318 340 310 Q375 302 415 316" fill="none" stroke="#A89E72" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Arm strap buckle left -->
+  <rect x="252" y="342" width="28" height="16" rx="3" fill="#A89E72" stroke="#7A7050" stroke-width="1.5"/>
+  <line x1="266" y1="342" x2="266" y2="358" stroke="#7A7050" stroke-width="2"/>
+
+  <!-- Arm strap buckle right -->
+  <rect x="400" y="308" width="28" height="16" rx="3" fill="#A89E72" stroke="#7A7050" stroke-width="1.5"/>
+  <line x1="414" y1="308" x2="414" y2="324" stroke="#7A7050" stroke-width="2"/>
+
+  <!-- Back strap buckles (visible on sides) -->
+  <rect x="248" y="300" width="14" height="10" rx="2" fill="#7A7050" opacity="0.7"/>
+  <rect x="418" y="338" width="14" height="10" rx="2" fill="#7A7050" opacity="0.7"/>
+
+  <!-- Jacket bottom hem -->
+  <path d="M258 388 Q295 400 340 398 Q385 400 422 388" fill="none" stroke="#A89E72" stroke-width="2" opacity="0.7"/>
+
+  <!-- Stubby legs + feet -->
+  <ellipse cx="308" cy="405" rx="24" ry="14" fill="#6B63C4"/>
+  <ellipse cx="372" cy="405" rx="24" ry="14" fill="#6B63C4"/>
+  <ellipse cx="300" cy="415" rx="18" ry="9" fill="#534AB7"/>
+  <ellipse cx="380" cy="415" rx="18" ry="9" fill="#534AB7"/>
+
+  <!-- BIG ANGRY HEAD -->
+  <circle cx="340" cy="175" r="112" fill="#7F77DD"/>
+  <circle cx="340" cy="175" r="112" fill="none" stroke="#534AB7" stroke-width="3"/>
+  <ellipse cx="340" cy="195" rx="70" ry="48" fill="#AFA9EC" opacity="0.18"/>
+
+  <!-- CHUNKY GLASSES -->
+  <rect x="262" y="134" width="68" height="50" rx="9" fill="white" stroke="#26215C" stroke-width="4.5"/>
+  <rect x="346" y="134" width="68" height="50" rx="9" fill="white" stroke="#26215C" stroke-width="4.5"/>
+  <line x1="330" y1="159" x2="346" y2="159" stroke="#26215C" stroke-width="4"/>
+  <line x1="262" y1="158" x2="238" y2="152" stroke="#26215C" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="414" y1="158" x2="438" y2="152" stroke="#26215C" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="296" cy="159" r="14" fill="#26215C"/>
+  <circle cx="301" cy="154" r="5" fill="white"/>
+  <circle cx="380" cy="159" r="14" fill="#26215C"/>
+  <circle cx="385" cy="154" r="5" fill="white"/>
+
+  <!-- ANGRY BROWS -->
+  <path d="M257 128 Q288 108 338 126" fill="none" stroke="#3C3489" stroke-width="7" stroke-linecap="round"/>
+  <path d="M342 126 Q392 108 423 128" fill="none" stroke="#3C3489" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- SCREAMING MOUTH -->
+  <ellipse cx="340" cy="222" rx="48" ry="34" fill="#26215C"/>
+  <ellipse cx="340" cy="216" rx="40" ry="22" fill="#3C3489"/>
+  <path d="M304 206 L310 216 L317 206 L324 216 L331 206 L338 216 L345 206 L352 216 L359 206 L366 216 L373 206 L380 216" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.75"/>
+  <ellipse cx="340" cy="238" rx="22" ry="12" fill="#D4537E"/>
+  <line x1="296" y1="207" x2="290" y2="193" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="320" y1="202" x2="317" y2="188" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="358" y1="202" x2="361" y2="188" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="384" y1="207" x2="390" y2="193" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- Cheek blush -->
+  <circle cx="262" cy="200" r="18" fill="#F5C4B3" opacity="0.38"/>
+  <circle cx="418" cy="200" r="18" fill="#F5C4B3" opacity="0.38"/>
+
+  <!-- RAGE SPARKS -->
+  <path d="M388 58 L396 36 M402 64 L416 42 M414 74 L432 54" fill="none" stroke="#E24B4A" stroke-width="3.5" stroke-linecap="round" opacity="0.72"/>
+  <path d="M290 62 L280 40 M276 70 L260 50" fill="none" stroke="#E24B4A" stroke-width="3.5" stroke-linecap="round" opacity="0.62"/>
+  <line x1="455" y1="148" x2="482" y2="140" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.40"/>
+  <line x1="453" y1="172" x2="480" y2="172" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="228" y1="138" x2="200" y2="128" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- WORDMARK -->
+  <text x="340" y="456" text-anchor="middle" class="fb-label" font-size="54" fill="#26215C">FARTY</text>
+  <text x="340" y="512" text-anchor="middle" class="fb-label" font-size="54" fill="#7F77DD">BOBO</text>
+</svg>
