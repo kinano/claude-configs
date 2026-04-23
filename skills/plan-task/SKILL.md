@@ -132,5 +132,5 @@ This file is **not** committed to the repo. It is a session scratch file consume
 ### 10. Commit and Hand Off
 
 After approval and a clean security audit:
-1. Commit the plan file and acceptance test file to the current feature branch. Show the diff to the human before committing. Do not stage dotfiles, secrets, or the `decisions-*.md` scratch file.
+1. Commit only the acceptance test file to the current feature branch. Show the diff to the human before committing. Do not stage the plan file, dotfiles, secrets, or the `decisions-*.md` scratch file.
 2. Pass a summary of the task details, the plan file path, the acceptance test file path, the decisions scratch file path, and all generated artifacts to the `/build` skill.
