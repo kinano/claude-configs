@@ -5,6 +5,7 @@ description: >
   branch was pushed to origin and that branch has since been deleted from origin (e.g. after a
   merged/closed PR). Trigger when the user says things like "clean up worktrees", "delete dead
   worktrees", "prune old worktrees", "remove stale worktrees", or "worktree cleanup".
+model: haiku
 ---
 
 # Cleanup Dead Worktrees

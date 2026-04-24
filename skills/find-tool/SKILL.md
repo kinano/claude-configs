@@ -5,6 +5,7 @@ description: >
   Embark Claude tooling repos already handles it. Always run this before building anything new.
   Trigger on: "do we have a tool for", "is there a skill for", "can we do X already",
   "check if there's a tool", "find a tool for", "what skill should I use for".
+model: haiku
 ---
 
 # Find an Existing Tool

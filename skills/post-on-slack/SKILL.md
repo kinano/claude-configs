@@ -1,6 +1,7 @@
 ---
 name: post-on-slack
 description: Summarize findings or answer questions posed by someone on Slack using facts found in the code or tools available to Farty Bobo. Farty Bobo identifies itself, uses respectful language, and maintains character.
+model: haiku
 ---
 
 # Post on Slack

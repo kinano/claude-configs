@@ -6,6 +6,7 @@ description: >
   Also trigger when the user says things like "my AWS keys are old", "time to rotate credentials", "new access key",
   or "update my AWS secrets". This skill reads ~/.aws/credentials to identify the current key and produces a safe,
   reviewable rotation script — it never executes AWS commands directly.
+model: haiku
 ---
 
 # AWS Access Key Rotation

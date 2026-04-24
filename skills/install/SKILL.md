@@ -5,6 +5,7 @@ description: >
   (fartybobo/farty-bobo) onto this machine — without forking or cloning the whole repo.
   Trigger on: "install farty bobo", "install skills from farty bobo", "get the farty bobo skills",
   "install hooks", "install commands from config repo".
+model: haiku
 ---
 
 # Farty Bobo Installer
