@@ -93,7 +93,10 @@
     "codex@openai-codex": true,
     "frontend-design@claude-plugins-official": true,
     "slack@claude-plugins-official": true,
-    "farty-bobo@farty-bobo": true
+    "farty-bobo@farty-bobo": true,
+    "boundary-checker@embarkvet-claude-plugins": true,
+    "notebook-to-markdown@embarkvet-claude-plugins": true,
+    "plan-duet@embarkvet-claude-plugins": true
   },
   "extraKnownMarketplaces": {
     "hamelsmu-evals-skills": {
@@ -124,6 +127,12 @@
       "source": {
         "source": "github",
         "repo": "vladikk/modularity"
+      }
+    },
+    "embarkvet-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "embarkvetlabs/embarkvet-claude-plugins"
       }
     }
   },
