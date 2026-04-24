@@ -74,6 +74,43 @@ If the implementation plan involves cloud infrastructure, **or** if the repo con
 - `awsiac` — search CDK/CloudFormation docs, validate templates, get CDK best practices
 - `awspricing` — estimate costs for the proposed architecture
 
+### 6c. Enrich for UI/Design (if applicable)
+
+**Trigger:** One or more `figma.com/design/...` URLs are present in the task description, Jira ticket body, or provided by the human.
+
+- `figma.com/board/...` URLs are FigJam boards — they cannot provide component or token data. Flag them to the human and exclude them from this step.
+- Non-Figma design sources (Zeplin, Sketch, screenshots) are **out of scope** — flag them to the human and skip this step.
+
+When triggered:
+
+1. **Extract and record Figma URLs** — parse all `figma.com/design/...` URLs from the task input. Record each URL in the plan file under a "Figma Sources" subsection before proceeding.
+
+2. **Detect the component library path** — search the repo for a components directory using common conventions (`src/components`, `components/`, `lib/ui`, `packages/ui/src`, etc.). If multiple candidates exist or none is found, ask the human for the path before continuing. Do not proceed with a guess.
+
+3. **Determine mode for each Figma node/frame** — for each named frame or component in the Figma file, search the detected component library by name and file pattern:
+   - **Mode A — Component Mapping:** A file matching the node name (case-insensitive, allowing common suffixes like `.tsx`, `.vue`, `.svelte`) exists in the component library → map this node to that file.
+   - **Mode B — New Component:** No match found after searching → mark this node as `NEW`.
+   - A single URL may yield both Mode A and Mode B nodes. Document all mappings before invoking `/frontend-design`.
+
+4. **Invoke `/frontend-design`** — pass each Figma URL along with:
+   - The component library path confirmed in Step 2
+   - The task context summary from Step 3
+   - The full Mode A/B mapping table from Step 3 of this step
+
+5. **Collect outputs from `/frontend-design`:**
+   - **Component inventory table:** maps each Figma node/frame → existing component file path, or `NEW`
+   - **Design token mappings:** Figma design tokens/styles → project CSS variables, theme tokens, or Tailwind classes
+   - **Code stubs:** skeleton implementations for `NEW` components — saved to the repo's established component directory, marked with `// TODO: implement` and the ticket ID
+
+6. **Retroactively update the plan file written in Step 5** — add a **"UI Components"** section containing:
+   - Component inventory table
+   - Design token mapping table
+   - List of stub file paths written to disk
+
+   Also update the "Affected files and components" section to include all stub paths.
+
+**If `/frontend-design` is unavailable:** record the Figma URLs and the Mode A/B mapping table in the plan file, flag this to the human, and continue without design enrichment. Do not block the plan on tool availability.
+
 ### 7. Define TDD/BDD Acceptance Criteria as Failing Tests
 
 Produce a set of tests before human review. These tests are the **acceptance contract**.
