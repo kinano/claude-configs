@@ -9,6 +9,9 @@ Shared configuration files for Claude Code. Clone this repo and symlink the file
 ## Repo Structure
 
 ```
+├── .claude-plugin/      # Claude Code plugin manifest — makes this repo an installable plugin
+│   ├── plugin.json
+│   └── marketplace.json
 ├── CLAUDE.md            # Project-level instructions
 ├── settings.json        # Claude Code settings (model, hooks, permissions, etc.)
 ├── .mcp.json            # MCP server configuration
@@ -17,10 +20,8 @@ Shared configuration files for Claude Code. Clone this repo and symlink the file
 ├── hooks/
 │   ├── post-edit-check.sh
 │   └── README.md
-├── plugins/
-│   └── farty-bobo/      # Installable plugin — pick & install skills/hooks/commands à la carte
 └── skills/
-    └── *
+    └── *                # All skills, including /install for à la carte setup
 ```
 
 ## Setup on a New Machine

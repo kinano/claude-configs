@@ -1,5 +1,0 @@
-{
-  "name": "farty-bobo",
-  "version": "1.0.0",
-  "description": "Selectively install skills, hooks, and commands from the Farty Bobo config repo without forking or cloning the whole thing"
-}

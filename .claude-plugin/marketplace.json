@@ -1,0 +1,16 @@
+{
+  "name": "farty-bobo",
+  "metadata": {
+    "description": "Opinionated Claude Code configuration — skills, hooks, and commands"
+  },
+  "owner": {
+    "name": "Kinan Faham"
+  },
+  "plugins": [
+    {
+      "name": "farty-bobo",
+      "source": "./",
+      "description": "Opinionated Claude Code skills, hooks, and commands. Use /farty-bobo:install to selectively install what you want without cloning the whole repo."
+    }
+  ]
+}
