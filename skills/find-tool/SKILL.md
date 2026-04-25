@@ -81,4 +81,39 @@ End with: "No need to build anything new — use the above."
 
 ### If nothing matches:
 
-Say clearly that no existing tool covers this. Name the closest thing and why it falls short. Then stop — do not start building.
+Say clearly that no existing tool covers this. Name the closest thing and why it falls short.
+
+Then ask the user whether they want to see the full tool catalog using an interactive prompt with exactly two options:
+
+```
+Want to see the full list of available tools?
+> Yes
+  No
+```
+
+**If the user selects Yes:**
+
+Print every tool discovered in step 1, grouped into three sections:
+
+```
+## Skills
+- **<name>** — <one-line description>
+  Source: embarkvetlabs/claude-configs · skills/<name>
+
+## Plugins
+- **<plugin-name>**
+  - Agent: <agent-name> — <one-line description>
+  - Skill: /<skill-name> — <one-line description>
+  Source: embarkvetlabs/embarkvet-claude-plugins · plugins/<plugin-name>
+
+## Hooks
+- **<hook-filename>** — <one-line description from header comment>
+  Source: embarkvetlabs/claude-configs · hooks/<hook-filename>
+```
+
+Omit a section entirely if it has no entries. After the list, add: "None of these cover your original query — you may need to build something new."
+
+**If the user selects No:**
+
+Ask: "Do you have any other questions about the available tools?"
+Wait for the user's response and answer accordingly. Do not start building anything.
