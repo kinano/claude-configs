@@ -122,14 +122,14 @@ disable-model-invocation: false
    **Human approval gate:**
    Show the human the full draft comment and ask: "Ready to post this Decision Log to `{ticket-id}`? (yes / edit / skip)" — do not post without explicit confirmation.
 
-   **Identity disclosure (required):** The comment body MUST begin with a Farty Bobo identity line so readers don't mistake the Decision Log for something the human typed themselves. When overwriting an existing Decision Log comment, refresh this line — do not leave the old one in place.
+   **Identity disclosure (required):** The comment body MUST begin with your identity line (as defined in CLAUDE.md) so readers don't mistake the Decision Log for something the human typed themselves. When overwriting an existing Decision Log comment, refresh this line — do not leave the old one in place.
 
    **Comment format:**
 
    ```
    ## Decision Log
 
-   _Posted by Farty Bobo on behalf of @<github-or-jira-handle>._
+   _Posted by {your identity} on behalf of @<github-or-jira-handle>._
 
    _Last updated: YYYY-MM-DD — Push SHA: {short-sha}_
 

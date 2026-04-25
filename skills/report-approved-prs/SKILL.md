@@ -91,4 +91,4 @@ After the report, offer concrete follow-ups based on what was found — do not t
 
 - This skill is read-only by default. It must not merge, close, rebase, or comment on any PR without explicit caller confirmation.
 - Never post a summary comment on the PRs being reported. The report lives in the conversation, not on GitHub.
-- Do not exfiltrate the report to Slack, Jira, Confluence, or any other external system unless the caller explicitly directs it. If directed, use the dedicated `post-on-slack` / `comment-jira` / `comment-confluence` skill so the Farty Bobo identity disclosure is applied.
+- Do not exfiltrate the report to Slack, Jira, Confluence, or any other external system unless the caller explicitly directs it. If directed, use the dedicated `post-on-slack` / `comment-jira` / `comment-confluence` skill so the identity disclosure (as defined in CLAUDE.md) is applied.
