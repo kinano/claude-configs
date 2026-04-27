@@ -107,6 +107,7 @@ image: /logos/fartybobo_angry_mascot_1360.png
     letter-spacing: -0.01em;
     margin-bottom: 36px;
     opacity: 0;
+    will-change: transform, opacity;
     animation:
       fb-slam 0.5s cubic-bezier(0.22,1,0.36,1) 0.2s forwards,
       fb-glitch 8s steps(1) 2s infinite;
@@ -244,8 +245,8 @@ image: /logos/fartybobo_angry_mascot_1360.png
   }
 
   @keyframes fb-slam {
-    from { opacity: 0; transform: translateY(48px) scaleY(1.05); }
-    to   { opacity: 1; transform: translateY(0) scaleY(1); }
+    from { opacity: 0; transform: translateY(48px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes fb-mascot-in {
@@ -264,11 +265,11 @@ image: /logos/fartybobo_angry_mascot_1360.png
 
   /* glitch: fires at 0%, 10%, 12%, 14% then dormant — repeats every 8s */
   @keyframes fb-glitch {
-    0%   { text-shadow: none; transform: none; }
-    2%   { text-shadow: 3px 0 0 rgba(127,119,221,0.8), -3px 0 0 rgba(151,196,89,0.6); transform: skewX(-1deg); clip-path: inset(20% 0 50% 0); }
-    4%   { text-shadow: -2px 0 0 rgba(127,119,221,0.8), 2px 0 0 rgba(151,196,89,0.6); transform: skewX(1deg); clip-path: inset(60% 0 10% 0); }
-    6%   { text-shadow: none; transform: none; clip-path: none; }
-    100% { text-shadow: none; transform: none; clip-path: none; }
+    0%   { transform: none; opacity: 1; }
+    2%   { transform: skewX(-1deg) translateX(3px); opacity: 0.85; }
+    4%   { transform: skewX(1deg) translateX(-3px); opacity: 0.9; }
+    6%   { transform: none; opacity: 1; }
+    100% { transform: none; opacity: 1; }
   }
 
   /* ── DESKTOP (>1100px) & TABLET (801–1100px) share absolute mascot layout ── */
@@ -368,7 +369,7 @@ image: /logos/fartybobo_angry_mascot_1360.png
     <div class="fb-left">
       <p class="fb-label">Farty Bobo</p>
       <p class="fb-tagline">We Got the<br>F***ing Gas</p>
-      <p class="fb-desc">
+      <p class="fb-desc" id="fb-desc-text">
         Every machine you own is a different hellscape of broken configs and
         missing context. This fixes that. It's <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a>
         — but opinionated, angry, and actually set up right.
@@ -379,7 +380,7 @@ image: /logos/fartybobo_angry_mascot_1360.png
     <div class="fb-mascot-wrap">
       <img
         class="fb-mascot"
-        src="{{ '/logos/fartybobo_angry_mascot.svg' | relative_url }}"
+        src="{{ '/logos/fartybobo_straitjacket.svg' | relative_url }}"
         alt="Farty Bobo mascot"
       />
     </div>
@@ -414,6 +415,10 @@ image: /logos/fartybobo_angry_mascot_1360.png
           <span class="fb-item-key">commands/</span>
           <span class="fb-item-val">Status line and other crap Claude needs to actually function.</span>
         </li>
+        <li>
+          <span class="fb-item-key">plugins/</span>
+          <span class="fb-item-val">Don't want the whole thing? Run <code>/plugin marketplace add fartybobo/farty-bobo</code> then <code>/farty-bobo:install</code>.</span>
+        </li>
       </ul>
     </div>
 
@@ -432,3 +437,5 @@ image: /logos/fartybobo_angry_mascot_1360.png
   <footer class="fb-footer">Farty Bobo &mdash; We Got the f***ing Gas</footer>
 
 </div>
+
+<script src="{{ '/assets/js/hero-variant.js' | relative_url }}"></script>

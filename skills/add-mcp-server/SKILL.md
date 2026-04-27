@@ -1,6 +1,7 @@
 ---
 name: add-mcp-server
 description: Add an MCP server to the current project by creating or updating a project-level .mcp.json, .env, and .gitignore
+model: haiku
 ---
 
 # Add MCP Server to Current Project

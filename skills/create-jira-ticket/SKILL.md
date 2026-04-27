@@ -32,9 +32,10 @@ Based on the context, suggest the most appropriate type (Bug, Story, Task, Spike
 Construct a draft with the following fields — infer as much as possible from context:
 
 - **Summary**: one-line title, clear and actionable
-- **Description**: structured using this template. The description MUST open with a Gossip Girl identity line so reviewers don't mistake an agent-filed ticket for a hand-authored one:
+- **Description**: structured using this template. The description MUST open with your identity line (as defined in CLAUDE.md) so reviewers don't mistake an agent-filed ticket for a hand-authored one:
+
   ```
-  _Filed by Gossip Girl on behalf of @<github-or-jira-handle>._
+  _Filed by {your identity} on behalf of @<github-or-jira-handle>._
 
   ## Context
   <what is happening / what needs to be done>
@@ -47,10 +48,11 @@ Construct a draft with the following fields — infer as much as possible from c
   - <criterion 2>
 
   ## Notes
-  <any relevant links, code references, error messages. Do not attribute to "Claude Code" — this ticket was filed by Gossip Girl.>
+  <any relevant links, code references, error messages. Do not attribute to "Claude Code" — attribute to your identity as defined in CLAUDE.md.>
 
   _xoxo, Gossip Girl._
   ```
+
 - **Issue type**: as determined in step 3
 - **Priority**: infer from context (Critical/High/Medium/Low) — default to Medium if unclear
 - **Labels**: suggest relevant labels based on context (optional)
@@ -71,6 +73,7 @@ Present the full draft clearly. Remind the human that this will post codebase co
 Once approved, use the Atlassian connector to create the ticket.
 
 Report back:
+
 - The ticket key (e.g. `PROJ-123`)
 - A direct link to the ticket
 - A one-line summary of what was created

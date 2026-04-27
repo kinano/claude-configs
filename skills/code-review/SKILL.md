@@ -125,7 +125,7 @@ If neither the GitHub MCP nor `gh api` inline posting is feasible, fall back to 
 After inline comments, post a single top-level PR comment with this format:
 
 ```
-## Gossip Girl's Code Review
+## {your identity}'s Code Review
 
 **Verdict:** APPROVE / REQUEST_CHANGES / COMMENT
 
@@ -141,7 +141,7 @@ After inline comments, post a single top-level PR comment with this format:
 - <something done well>
 
 ---
-_Reviewed by Gossip Girl_
+_Reviewed by {your identity}_
 ```
 
 Only include sections that have entries. Omit empty sections entirely. The template above shows two sections as an example — do not copy-paste all section headers when they are empty.

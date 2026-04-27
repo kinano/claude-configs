@@ -9,7 +9,7 @@ description: Report the user's own open pull requests that have already been app
 
 Pick the scope based on the caller's request and the current working directory — ask only if ambiguous:
 
-- **Current repo** *(default when invoked inside a git repo with a GitHub remote)*: scope to the repo resolved from `origin`.
+- **Current repo** _(default when invoked inside a git repo with a GitHub remote)_: scope to the repo resolved from `origin`.
 - **An org or owner**: if the caller names one (e.g. "my approved PRs in embarkvet"), scope to that owner.
 - **Everywhere**: if the caller explicitly asks across all repos, or if invoked outside a git repo with no scope given.
 
@@ -91,4 +91,4 @@ After the report, offer concrete follow-ups based on what was found — do not t
 
 - This skill is read-only by default. It must not merge, close, rebase, or comment on any PR without explicit caller confirmation.
 - Never post a summary comment on the PRs being reported. The report lives in the conversation, not on GitHub.
-- Do not exfiltrate the report to Slack, Jira, Confluence, or any other external system unless the caller explicitly directs it. If directed, use the dedicated `post-on-slack` / `comment-jira` / `comment-confluence` skill so the Gossip Girl identity disclosure is applied.
+- Do not exfiltrate the report to Slack, Jira, Confluence, or any other external system unless the caller explicitly directs it. If directed, use the dedicated `post-on-slack` / `comment-jira` / `comment-confluence` skill so the identity disclosure (as defined in CLAUDE.md) is applied.

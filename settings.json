@@ -16,6 +16,11 @@
       "Bash(nvm:*)",
       "Bash(git log:*)",
       "Bash(git reset:*)",
+      "Bash(git worktree:*)",
+      "Bash(git -C:*)",
+      "Bash(git symbolic-ref:*)",
+      "Bash(git config --get:*)",
+      "Bash(git rev-parse:*)",
       "Bash(cat:*)",
       "WebSearch",
       "Bash(sort:*)",
@@ -88,7 +93,11 @@
     "deploy-on-aws@agent-plugins-for-aws": true,
     "codex@openai-codex": true,
     "frontend-design@claude-plugins-official": true,
-    "slack@claude-plugins-official": true
+    "slack@claude-plugins-official": true,
+    "farty-bobo@farty-bobo": true,
+    "boundary-checker@embarkvet-claude-plugins": true,
+    "notebook-to-markdown@embarkvet-claude-plugins": true,
+    "plan-duet@embarkvet-claude-plugins": true
   },
   "extraKnownMarketplaces": {
     "hamelsmu-evals-skills": {
@@ -103,6 +112,12 @@
         "repo": "awslabs/agent-plugins"
       }
     },
+    "farty-bobo": {
+      "source": {
+        "source": "github",
+        "repo": "fartybobo/farty-bobo"
+      }
+    },
     "openai-codex": {
       "source": {
         "source": "github",
@@ -113,6 +128,12 @@
       "source": {
         "source": "github",
         "repo": "vladikk/modularity"
+      }
+    },
+    "embarkvet-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "embarkvetlabs/embarkvet-claude-plugins"
       }
     }
   },

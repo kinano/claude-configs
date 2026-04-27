@@ -19,3 +19,4 @@ disable-model-invocation: false
    - If the diff touches **3+ modules/packages** or exceeds **500 changed lines**, run `/modularity:review` against the affected repos before proceeding to critique. Present coupling findings to the human and address any issues before committing.
    - Otherwise, skip the modularity review.
 7. Run `/critique` with the implementation plan and all impacted repos to ensure changes are reviewed, committed, and pushed.
+8. Do not leave code comments. The code should be simple and self-explanatory. Comments should be used sparingly.

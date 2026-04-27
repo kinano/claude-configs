@@ -29,66 +29,75 @@ Use `gh` and the GitHub search API to find open PRs by the user's teammates that
 1. **Resolve the org:** extract the org from the `{owner}/{repo}` resolved in Step 0 (e.g. `ProjectAussie`).
 
 2. **Find teammate usernames:** ask the user for a list of names or GitHub handles to search for. If they provide display names (e.g. "Claire", "Tom McT"), resolve them to GitHub logins by searching org members:
+
    ```
    gh api 'orgs/{org}/members' --paginate --jq '.[] | select(.login | test("{name}"; "i")) | .login'
    ```
 
 3. **Find open PRs by those authors:**
+
    ```
    gh search prs --state open --author {login} --json number,title,url,author,repository --limit 20
    ```
+
    Run one search per author. Collect all results.
 
 4. **Filter to actionable PRs only** — for each PR, fetch its review status and check whether the current user has already reviewed:
 
    a. Get the current user's login:
-      ```
-      gh api user --jq .login
-      ```
+
+   ```
+   gh api user --jq .login
+   ```
 
    b. Get PR metadata:
-      ```
-      gh pr view <number> -R <owner/repo> --json reviewDecision,isDraft,reviewRequests
-      ```
+
+   ```
+   gh pr view <number> -R <owner/repo> --json reviewDecision,isDraft,reviewRequests
+   ```
 
    c. Get the current user's most recent review on this PR (if any) and the latest commit date:
-      ```
-      gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.user.login == "{current_user}")] | sort_by(.submitted_at) | last | {state: .state, submitted_at: .submitted_at}'
-      ```
-      ```
-      gh api repos/{owner}/{repo}/pulls/{number}/commits --jq 'last | .commit.committer.date'
-      ```
+
+   ```
+   gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.user.login == "{current_user}")] | sort_by(.submitted_at) | last | {state: .state, submitted_at: .submitted_at}'
+   ```
+
+   ```
+   gh api repos/{owner}/{repo}/pulls/{number}/commits --jq 'last | .commit.committer.date'
+   ```
 
    d. Keep only PRs where **all** of the following are true:
-      - `isDraft: false`
-      - `reviewDecision` is NOT excluded — include all values: `"REVIEW_REQUIRED"`, `""` (empty), `"APPROVED"`, and `"CHANGES_REQUESTED"` (someone else may have requested changes — you still need to review)
+   - `isDraft: false`
+   - `reviewDecision` is NOT excluded — include all values: `"REVIEW_REQUIRED"`, `""` (empty), `"APPROVED"`, and `"CHANGES_REQUESTED"` (someone else may have requested changes — you still need to review)
 
    e. **Skip PRs where the current user is already waiting on the author:**
-      - If the current user's most recent review `state` is `CHANGES_REQUESTED`, AND
-      - The latest commit on the PR is **older** than the review's `submitted_at` timestamp (meaning no new commits since the review)
-      - Then **exclude** this PR — it's waiting on the author to push changes, not on you to re-review
-      - If the author has pushed new commits after your CHANGES_REQUESTED review, **include** it — it needs a follow-up review
+   - If the current user's most recent review `state` is `CHANGES_REQUESTED`, AND
+   - The latest commit on the PR is **older** than the review's `submitted_at` timestamp (meaning no new commits since the review)
+   - Then **exclude** this PR — it's waiting on the author to push changes, not on you to re-review
+   - If the author has pushed new commits after your CHANGES_REQUESTED review, **include** it — it needs a follow-up review
 
-5. **Bucket by requester type** (reuse the current user's login from step 4a — do not fetch it again):**
+5. **Bucket by requester type** (reuse the current user's login from step 4a — do not fetch it again):\*\*
    - **Your individual review:** PRs where `reviewRequests` contains the current user's login
    - **Team approval:** PRs with `REVIEW_REQUIRED` but no individual review request for you — these are waiting on a team
 
 6. **Present the list to the user** grouped by author and bucket, with URLs. If any PRs were skipped because the current user is waiting on the author, list them separately:
 
    > **Skipped (waiting on author after your CHANGES_REQUESTED):**
+   >
    > - {owner}/{repo}#{number} — {title} — last reviewed {date}, no new commits since
 
    Then ask: "Should I review all of these, or select a subset? I can also include the skipped PRs if you want to re-review them."
 
 7. Once the user confirms the set, continue with the normal Step 1 classification flow using those PRs.
+
 - For each PR, run `gh pr view <number> --json number,title,state,isDraft,baseRefName,headRefName,createdAt` to get metadata.
 - Determine the relationship between the PRs:
 
-  | Relationship | Definition | Review strategy |
-  |---|---|---|
-  | **Stacked** | Each PR targets the previous PR's branch | Review in merge order; pass raw diff context forward |
-  | **Parallel** | Multiple PRs for the same feature, split by concern | Review independently; flag integration risks |
-  | **Batch / Unrelated** | Unrelated changes reviewed together (e.g. release batch) | Review fully independently |
+  | Relationship          | Definition                                               | Review strategy                                      |
+  | --------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
+  | **Stacked**           | Each PR targets the previous PR's branch                 | Review in merge order; pass raw diff context forward |
+  | **Parallel**          | Multiple PRs for the same feature, split by concern      | Review independently; flag integration risks         |
+  | **Batch / Unrelated** | Unrelated changes reviewed together (e.g. release batch) | Review fully independently                           |
 
 - State your interpretation to the user and **wait for explicit confirmation before fanning out**. Do not proceed until the user confirms or corrects the relationship classification. A misclassified stacked set will silently skip context forwarding — this confirmation gate is not optional.
 
@@ -168,26 +177,31 @@ Valid `verdict` values: `"APPROVE"`, `"REQUEST_CHANGES"`, `"COMMENT"`.
 Each agent evaluates:
 
 ### Correctness
+
 - Does the code do what the PR description says?
 - Off-by-one errors, missing null checks, unhandled edge cases?
 - Are error paths handled?
 
 ### Security
+
 - OWASP Top 10: injection, broken auth, insecure deserialization, XSS, etc.
 - Hardcoded secrets? Inputs validated at system boundaries?
 - Least-privilege principle followed?
 
 ### Design & Simplicity
+
 - Is the abstraction level appropriate?
 - Unnecessary indirection or over-engineering?
 - Could anything be deleted with no behavior change?
 
 ### Readability & Maintainability
+
 - Clear variable and function names?
 - Complex logic commented where intent isn't obvious?
 - Dead code, debug artifacts, commented-out blocks left in?
 
 ### Test Coverage
+
 - Tests for the new behavior?
 - Do existing tests still make sense? Are mocks hiding real integration issues?
 - Edge cases covered?
@@ -200,17 +214,18 @@ Agents **must** complete this section before forming a verdict. Omitting it is a
 
 Use **all three** data sources together — each one shows different things:
 
-| Source | What it shows | Command |
-|--------|--------------|---------|
-| PR conversation comments | Top-level discussion | `gh pr view <number> --comments` |
-| Formal review state | `APPROVED`, `CHANGES_REQUESTED`, `DISMISSED` per reviewer | `gh api repos/{owner}/{repo}/pulls/{number}/reviews` |
-| Inline review thread comments | Line-level reviewer concerns | `gh api repos/{owner}/{repo}/pulls/{number}/comments` |
+| Source                        | What it shows                                             | Command                                               |
+| ----------------------------- | --------------------------------------------------------- | ----------------------------------------------------- |
+| PR conversation comments      | Top-level discussion                                      | `gh pr view <number> --comments`                      |
+| Formal review state           | `APPROVED`, `CHANGES_REQUESTED`, `DISMISSED` per reviewer | `gh api repos/{owner}/{repo}/pulls/{number}/reviews`  |
+| Inline review thread comments | Line-level reviewer concerns                              | `gh api repos/{owner}/{repo}/pulls/{number}/comments` |
 
 #### Identifying deferred or prior concerns
 
 Scan **reviewer comment threads** (not PR description, not commit messages) for phrases that indicate deferral: "we'll fix this later", "out of scope for this PR", "follow-up ticket", "known issue", "accepted risk", or similar.
 
 Do **not** treat the following as deferral signals:
+
 - `TODO` comments in the code diff (those are code annotations, not reviewer deferrals)
 - Language in the PR description or commit messages authored by the PR submitter (that's the author pre-framing, not a reviewer decision)
 - Emoji reactions (thumbs-up, etc.) — these carry no formal semantic weight and must not be used to classify deferral status
@@ -218,6 +233,7 @@ Do **not** treat the following as deferral signals:
 #### Assigning severity to prior concerns
 
 Prior reviewer comments do not use this skill's severity taxonomy. When a prior concern has no explicit severity, assign one based on impact:
+
 - A concern about correctness, data loss, or security → `BLOCKER` or `HIGH`
 - A concern about design, maintainability, or missing tests → `MEDIUM`
 - A concern about style, naming, or minor cleanup → `LOW`
@@ -226,11 +242,11 @@ Document your severity assignment and reasoning in the `reasoning` field of the 
 
 #### Status classification rules
 
-| Status | Criteria |
-|--------|----------|
-| **accepted** | The **reviewer who raised the concern** (not the author) explicitly accepted the deferral — e.g., replied "OK to defer", "fine for now", submitted a new `APPROVED` review after discussion. Author acknowledgment alone is **not** sufficient. If the reviewer went silent after the author acknowledged, classify as `unresolved` — reviewer silence does not equal acceptance. |
-| **addressed_in_code** | The concern was addressed by a code change. **You must verify this** — cross-reference the PR diff to confirm the fix is actually present. A comment saying "fixed" or "done" without a corresponding code change means the status is `unresolved`, not `addressed_in_code`. |
-| **unresolved** | Anything else: no reply, author disputed it without reviewer resolution, reviewer went silent, or the formal review state is still `CHANGES_REQUESTED` and not `DISMISSED`. |
+| Status                | Criteria                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **accepted**          | The **reviewer who raised the concern** (not the author) explicitly accepted the deferral — e.g., replied "OK to defer", "fine for now", submitted a new `APPROVED` review after discussion. Author acknowledgment alone is **not** sufficient. If the reviewer went silent after the author acknowledged, classify as `unresolved` — reviewer silence does not equal acceptance. |
+| **addressed_in_code** | The concern was addressed by a code change. **You must verify this** — cross-reference the PR diff to confirm the fix is actually present. A comment saying "fixed" or "done" without a corresponding code change means the status is `unresolved`, not `addressed_in_code`.                                                                                                      |
+| **unresolved**        | Anything else: no reply, author disputed it without reviewer resolution, reviewer went silent, or the formal review state is still `CHANGES_REQUESTED` and not `DISMISSED`.                                                                                                                                                                                                       |
 
 #### Formal review state handling
 
@@ -248,18 +264,19 @@ Document your severity assignment and reasoning in the `reasoning` field of the 
 Populate the `prior_discussions` array in the Output Contract for every prior concern found. Include a dedicated **"Prior Discussions"** subsection in the review output listing each item, its status, original severity, and your reasoning.
 
 ### Performance (only if relevant)
+
 - Obvious N+1 queries, unnecessary loops, unindexed DB calls?
 - Heavy computation in request paths?
 
 ## Step 4 — Finding severity scale
 
-| Level | Meaning |
-|---|---|
-| **BLOCKER** | Must be fixed before merge. Correctness bug, security vuln, broken contract, CI failure introduced by this PR. |
-| **HIGH** | Serious design or reliability issue. Should fix; discuss if deferring. |
-| **MEDIUM** | Real improvement, not blocking. Author should address or explicitly accept risk. |
-| **LOW / NIT** | Style, naming, minor cleanup. Don't block merge over these. |
-| **QUESTION** | Unclear intent — ask before judging. |
+| Level         | Meaning                                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------------------------- |
+| **BLOCKER**   | Must be fixed before merge. Correctness bug, security vuln, broken contract, CI failure introduced by this PR. |
+| **HIGH**      | Serious design or reliability issue. Should fix; discuss if deferring.                                         |
+| **MEDIUM**    | Real improvement, not blocking. Author should address or explicitly accept risk.                               |
+| **LOW / NIT** | Style, naming, minor cleanup. Don't block merge over these.                                                    |
+| **QUESTION**  | Unclear intent — ask before judging.                                                                           |
 
 Do not manufacture findings to look thorough. If the code is good, say so.
 
@@ -292,15 +309,15 @@ File format:
 
 #### Prior Discussions
 
-| Author | Summary | Status | Orig. Severity | Reasoning |
-|--------|---------|--------|---------------|-----------|
+| Author          | Summary                      | Status                                    | Orig. Severity                | Reasoning                    |
+| --------------- | ---------------------------- | ----------------------------------------- | ----------------------------- | ---------------------------- |
 | @reviewer-login | brief description of concern | accepted / unresolved / addressed_in_code | BLOCKER / HIGH / MEDIUM / LOW | why this status was assigned |
 
 #### Inline Comments
 
-| File | Line | Severity | Comment |
-|------|------|----------|---------|
-| `path/to/file.ts` | 42 | BLOCKER | Gossip Girl says: ... |
+| File              | Line | Severity | Comment                   |
+| ----------------- | ---- | -------- | ------------------------- |
+| `path/to/file.ts` | 42   | BLOCKER  | {your identity} says: ... |
 
 ---
 
@@ -309,10 +326,10 @@ File format:
 > **Relationship:** Stacked / Parallel / Batch
 > **Overall:** ALL APPROVE / MIXED / ALL REQUEST_CHANGES
 >
-> | PR | Title | Review Event | Blockers | Highs |
-> |----|-------|-------------|----------|-------|
-> | #123 | ... | APPROVE | 0 | 1 |
-> | #124 | ... | REQUEST_CHANGES | 1 | 0 |
+> | PR   | Title | Review Event    | Blockers | Highs |
+> | ---- | ----- | --------------- | -------- | ----- |
+> | #123 | ...   | APPROVE         | 0        | 1     |
+> | #124 | ...   | REQUEST_CHANGES | 1        | 0     |
 >
 > **Integration Concerns:** ...
 ```
@@ -347,7 +364,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --field "comments[][path]=path/to/file.ts" \
   --field "comments[][line]=42" \
   --field "comments[][side]=RIGHT" \
-  --field "comments[][body]=Gossip Girl says: <finding>"
+  --field "comments[][body]={your identity} says: <finding>"
 ```
 
 Where `{REVIEW_EVENT}` is the value read from the draft file's `Review Event` field for that PR (`APPROVE`, `REQUEST_CHANGES`, or `COMMENT`).
@@ -357,7 +374,7 @@ Where `{REVIEW_EVENT}` is the value read from the draft file's `Review Event` fi
 ```
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --method POST \
-  --field body="Reviewed by Gossip Girl" \
+  --field body="Reviewed by {your identity}" \
   --field event="{REVIEW_EVENT}"
 ```
 

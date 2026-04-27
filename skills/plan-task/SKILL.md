@@ -1,6 +1,7 @@
 ---
 name: plan-task
 description: Used to gather requirements, clarify scope, and create implementation plans for new feature requests or bug fixes
+model: opus[1m]
 ---
 
 # Planning Skill for Software Changes
@@ -74,6 +75,46 @@ If the implementation plan involves cloud infrastructure, **or** if the repo con
 - `awsiac` — search CDK/CloudFormation docs, validate templates, get CDK best practices
 - `awspricing` — estimate costs for the proposed architecture
 
+### 6c. Enrich for UI/Design (if applicable)
+
+**Trigger:** One or more Figma design URLs are present in the task description, Jira ticket body, or provided by the human. Treat both `https://figma.com/design/...` and `https://www.figma.com/design/...` as valid, including optional query parameters and fragments. Normalize scheme/subdomain as needed, but do not treat `/board/...` URLs as design files.
+
+- `figma.com/board/...` and `www.figma.com/board/...` URLs are FigJam boards — they cannot provide component or token data. Flag them to the human and exclude them from this step.
+- Non-Figma design sources (Zeplin, Sketch, screenshots) are **out of scope** — flag them to the human and skip this step.
+
+When triggered:
+
+1. **Extract and record Figma URLs** — parse all Figma design URLs from the task input, accepting both `figma.com/design/...` and `www.figma.com/design/...` forms and preserving any query parameters or fragments. Exclude any `/board/...` URLs. Record each URL in the plan file under a "Figma Sources" subsection before proceeding.
+
+2. **Collect the target Figma node/frame list** — `/plan-task` cannot enumerate frame or component names from a Figma URL by itself. For each Figma URL, require an explicit list of target frame/component names or node IDs from the human unless that list is already present in the task input. Record the provided names/IDs in the plan file under each Figma source. If no node/frame list is available, stop this Figma-enrichment flow, flag the gap to the human, and skip to the top-level Step 7 (TDD/BDD Acceptance Criteria) — do not attempt Mode A/B mapping or `/frontend-design`.
+
+3. **Detect the component library path** — search the repo for a components directory using common conventions (`src/components`, `components/`, `lib/ui`, `packages/ui/src`, etc.). If multiple candidates exist or none is found, ask the human for the path before continuing. Do not proceed with a guess.
+
+4. **Determine mode for each provided Figma node/frame** — for each frame/component name or node ID collected in Step 2, search the detected component library by name and file pattern:
+   - **Mode A — Component Mapping:** A file matching the node name (case-insensitive, allowing common suffixes like `.tsx`, `.vue`, `.svelte`) exists in the component library → map this node to that file.
+   - **Mode B — New Component:** No match found after searching → mark this node as `NEW`.
+   - A single URL may yield both Mode A and Mode B nodes. Document all mappings before invoking `/frontend-design`.
+
+5. **Invoke `/frontend-design`** — pass each Figma URL along with:
+   - The explicit node/frame names or IDs collected in Step 2
+   - The component library path confirmed in Step 3
+   - A short task-context bullet summary produced during the top-level Step 3 (Clarify Requirements)
+   - The full Mode A/B mapping table from Step 4
+
+6. **Collect outputs from `/frontend-design`:**
+   - **Component inventory table:** maps each Figma node/frame → existing component file path, or `NEW`
+   - **Design token mappings:** Figma design tokens/styles → project CSS variables, theme tokens, or Tailwind classes
+   - **Code stubs:** skeleton implementations for `NEW` components — save these only as planning artifacts under `plans/stubs/` or inline as a patch/proposal in the plan, marked with `// TODO: implement` and the ticket ID. **Do not write stub files into the repo's real component directory or any location that build/test/lint/package tooling may discover.**
+
+7. **Retroactively update the plan file written in Step 5** — add a **"UI Components"** section containing:
+   - Component inventory table
+   - Design token mapping table
+   - List of stub artifact paths under `plans/stubs/`
+
+   Also update the "Affected files and components" section to include the relevant component targets and any stub artifact paths under `plans/`, but do not list unimplemented production component file paths as files written to disk.
+
+**If `/frontend-design` is unavailable:** record the Figma URLs, the explicit node/frame list from Step 2, and the Mode A/B mapping table in the plan file, flag this to the human, and continue without design enrichment. Do not block the plan on tool availability.
+
 ### 7. Define TDD/BDD Acceptance Criteria as Failing Tests
 
 Produce a set of tests before human review. These tests are the **acceptance contract**.
@@ -132,5 +173,5 @@ This file is **not** committed to the repo. It is a session scratch file consume
 ### 10. Commit and Hand Off
 
 After approval and a clean security audit:
-1. Commit the plan file and acceptance test file to the current feature branch. Show the diff to the human before committing. Do not stage dotfiles, secrets, or the `decisions-*.md` scratch file.
+1. Commit only the acceptance test file to the current feature branch. Show the diff to the human before committing. Do not stage the plan file, dotfiles, secrets, or the `decisions-*.md` scratch file.
 2. Pass a summary of the task details, the plan file path, the acceptance test file path, the decisions scratch file path, and all generated artifacts to the `/build` skill.

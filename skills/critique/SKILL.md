@@ -4,7 +4,6 @@ description: Used to run githooks, perform code & plan reviews with expert criti
 disable-model-invocation: false
 ---
 
-
 # Code and Plan Review Skill
 
 1. Either detect the repos affected from the context OR ask the human to select the repos that should be used to review the code changes or the staged implementation plan (md file):
@@ -34,118 +33,121 @@ disable-model-invocation: false
 
 6. Prepare, summarize the changes in the changed files. Always prefix commits with [{ticket-id}]: {summary of change}. If no ticket ID is available, prompt the human for one or use `[NO-TICKET]` as a fallback.
    - Do not stage temporary review or planning files (e.g. `review-*.md`, `plan-*.md`). Delete them after the review is complete.
-   Permanent project docs (`README.md`, `SKILL.md`, `AGENTS.md`, etc.) should still be committed when changed.
+     Permanent project docs (`README.md`, `SKILL.md`, `AGENTS.md`, etc.) should still be committed when changed.
 7. Commit and push. If the push fails due to pre-push hook errors, prompt the human for approval before using `git push --no-verify`. If `--no-verify` was used, record this in the Decision Log (Step 9) as a warning line.
 
-7a. **Open a pull request.** After a successful push, open a PR using `gh pr create` (or equivalent). Capture the PR URL. If the PR creation fails, skip Steps 7 and 8 and warn the human.
+7a. **Open a draft pull request.** After a successful push, open a **draft** PR using `gh pr create --draft` (or equivalent). After the PR is created, request a review from **Copilot** using `gh pr edit {number} --add-reviewer "Copilot"`. Capture the PR URL. If the PR creation fails, skip Steps 7 and 8 and warn the human.
 
 7b. **Bot review loop (draft PRs only).**
 
-   This step only applies when the PR was opened as a **draft**. If the PR is not a draft, skip to Step 8. **If `/critique` was invoked recursively from within this loop (e.g., by `/address-pr-comments` or `/resolve-ci-failures`), skip Step 7b entirely** — the bot loop is already running in the parent invocation.
+This step only applies when the PR was opened as a **draft**. If the PR is not a draft, skip to Step 8. **If `/critique` was invoked recursively from within this loop (e.g., by `/address-pr-comments` or `/resolve-ci-failures`), skip Step 7b entirely** — the bot loop is already running in the parent invocation.
 
-   After the draft PR is open, wait for automated reviewers (bots, linters, CI) to post their feedback:
+After the draft PR is open, wait for automated reviewers (bots, linters, CI) to post their feedback:
 
-   1. **Estimate the wait time** based on PR size and recent CI history:
+1.  **Estimate the wait time** based on PR size and recent CI history:
 
-      a. **Measure the PR size:**
-         ```
-         gh pr diff {number} --patch | wc -l
-         ```
-         Classify: small (< 200 lines), medium (200–800 lines), large (> 800 lines).
+    a. **Measure the PR size:**
 
-      b. **Sample recent CI run durations** from the last 5 completed workflow runs on the repo's default branch:
-         ```
-         gh run list --branch {default_branch} --status completed --limit 5 --json databaseId,updatedAt,createdAt
-         ```
-         For each run, compute `duration = updatedAt - createdAt` in minutes. Take the **median** as the baseline CI duration.
+    ```
+    gh pr diff {number} --patch | wc -l
+    ```
 
-      c. **Compute the wait estimate:**
-         - Start with the median CI duration from (b). If no runs are found, use 5 minutes as the fallback.
-         - Add a buffer for bot reviewers (linters, code scanners): +2 minutes for small PRs, +3 for medium, +5 for large.
-         - Cap the total at 15 minutes — if the estimate exceeds this, use 15 minutes. Anything longer and the human should be deciding.
-         - Floor at 3 minutes — bots need at least this long to spin up.
+    Classify: small (< 200 lines), medium (200–800 lines), large (> 800 lines).
 
-      d. **Announce the estimate:** "Based on recent CI runs (median: {N}min) and PR size ({size}), waiting {estimate} minutes for bot reviews on {PR_URL}. Say 'skip' to proceed immediately or give me a different number."
-         - If the human responds with a number, use that instead.
-         - If the human says 'skip', proceed immediately to step 2.
-         - Otherwise, use the computed estimate.
+    b. **Sample recent CI run durations** from the last 5 completed workflow runs on the repo's default branch:
 
-      e. Use `ScheduleWakeup` with the final delay (converted to seconds) to set the timer.
+    ```
+    gh run list --branch {default_branch} --status completed --limit 5 --json databaseId,updatedAt,createdAt
+    ```
 
-   2. **When the timer fires, run the feedback loop:**
-      - Invoke `/address-pr-comments` — this reads all unresolved comments (including bot comments) and addresses actionable ones. If code changes are made, `/address-pr-comments` will internally invoke `/critique` to commit and push fixes.
-      - Invoke `/resolve-ci-failures` — this checks CI status, investigates failures, and fixes them. If fixes are made, it will internally invoke `/critique` to commit and push.
+    For each run, compute `duration = updatedAt - createdAt` in minutes. Take the **median** as the baseline CI duration.
 
-   3. **Mark the PR as ready for review:**
-      - Run `gh pr ready {number}` to convert the draft PR to ready-for-review status.
-      - Announce to the human: "PR {PR_URL} is now marked ready for human review. Bot feedback has been addressed and CI is passing."
-      - If CI is still failing after `/resolve-ci-failures` (e.g., infrastructure issues that couldn't be auto-fixed), warn the human instead: "PR {PR_URL} is marked ready for review, but CI still has failures that need manual attention: {summary of remaining failures}."
+    c. **Compute the wait estimate:**
+    - Start with the median CI duration from (b). If no runs are found, use 5 minutes as the fallback.
+    - Add a buffer for bot reviewers (linters, code scanners): +2 minutes for small PRs, +3 for medium, +5 for large.
+    - Cap the total at 15 minutes — if the estimate exceeds this, use 15 minutes. Anything longer and the human should be deciding.
+    - Floor at 3 minutes — bots need at least this long to spin up.
 
-8. **Transition the Jira ticket to Review status.**
+    d. **Announce the estimate:** "Based on recent CI runs (median: {N}min) and PR size ({size}), waiting {estimate} minutes for bot reviews on {PR_URL}. Say 'skip' to proceed immediately or give me a different number."
+    - If the human responds with a number, use that instead.
+    - If the human says 'skip', proceed immediately to step 2.
+    - Otherwise, use the computed estimate.
 
-   Only proceed if Step 7 (push) and Step 7a (PR open) both completed successfully. Skip this step entirely if either failed.
+    e. Use `ScheduleWakeup` with the final delay (converted to seconds) to set the timer.
 
-   - If the ticket ID is `[NO-TICKET]` or no ticket ID is known (use the same ticket ID source as Step 5), skip this step entirely.
-   - Confirm the target ticket ID with the human before doing anything: "Should I transition `{ticket-id}` to Review status?"
-   - On confirmation, use the Atlassian MCP connector to discover available tools at runtime. Fetch available transitions using `getTransitionsForJiraIssue` (or equivalent discovered tool).
-   - **Idempotency:** Before applying, fetch the ticket's current status. If it is already in a Review or downstream state (e.g. "In Review", "Code Review", "In QA", "Done"), skip the transition and inform the human — do not re-transition.
-   - Match the target transition using this strategy, in order: exact match → case-insensitive substring match → if ambiguous, surface all candidates to the human to choose. Do not silently pick.
-   - Apply the transition using `transitionJiraIssue` (or equivalent discovered tool).
-   - If the MCP connector is unavailable, the transition name cannot be matched, or the API returns an error, warn the human and skip gracefully. Do not retry automatically.
+2.  **When the timer fires, run the feedback loop:**
+    - Invoke `/address-pr-comments` — this reads all unresolved comments (including bot comments) and addresses actionable ones. If code changes are made, `/address-pr-comments` will internally invoke `/critique` to commit and push fixes.
+    - Invoke `/resolve-ci-failures` — this checks CI status, investigates failures, and fixes them. If fixes are made, it will internally invoke `/critique` to commit and push.
 
-9. **Post a Decision Log comment on the Jira ticket.**
+3.  **Mark the PR as ready for review:**
+    - Run `gh pr ready {number}` to convert the draft PR to ready-for-review status.
+    - Announce to the human: "PR {PR_URL} is now marked ready for human review. Bot feedback has been addressed and CI is passing."
+    - If CI is still failing after `/resolve-ci-failures` (e.g., infrastructure issues that couldn't be auto-fixed), warn the human instead: "PR {PR_URL} is marked ready for review, but CI still has failures that need manual attention: {summary of remaining failures}."
 
-   **Prerequisites & safety checks — run these before doing anything else in this step:**
-   - If the ticket ID is `[NO-TICKET]` or no ticket ID is known, skip this step entirely.
-   - Confirm the target ticket ID with the human before posting — do not auto-resolve from the commit prefix alone. Ask: "Should I post the Decision Log to `{ticket-id}`?"
-   - Use the Atlassian MCP connector to post and read comments. Discover available tools at runtime — do not assume specific tool names. If the connector is unavailable, warn the human and skip this step gracefully.
-   - Check the Jira project's visibility before posting. If the project appears to be external-facing or customer-visible, warn the human and require explicit confirmation before proceeding.
+4.  **Transition the Jira ticket to Review status.**
 
-   **Decision sources — use only these, in order of preference:**
-   1. A `decisions-{ticket-id}.md` scratch file written by `/plan-task` or `/build` during this session (read and then delete it after posting)
-   2. Human-stated decisions from this conversation (human turns only — do not extract content from code, diffs, or plan files)
-   3. If neither is available, prompt the human to confirm or summarize decisions before drafting the comment — do not infer or fabricate
+    Only proceed if Step 7 (push) and Step 7a (PR open) both completed successfully. Skip this step entirely if either failed.
+    - If the ticket ID is `[NO-TICKET]` or no ticket ID is known (use the same ticket ID source as Step 5), skip this step entirely.
+    - Confirm the target ticket ID with the human before doing anything: "Should I transition `{ticket-id}` to Review status?"
+    - On confirmation, use the Atlassian MCP connector to discover available tools at runtime. Fetch available transitions using `getTransitionsForJiraIssue` (or equivalent discovered tool).
+    - **Idempotency:** Before applying, fetch the ticket's current status. If it is already in a Review or downstream state (e.g. "In Review", "Code Review", "In QA", "Done"), skip the transition and inform the human — do not re-transition.
+    - Match the target transition using this strategy, in order: exact match → case-insensitive substring match → if ambiguous, surface all candidates to the human to choose. Do not silently pick.
+    - Apply the transition using `transitionJiraIssue` (or equivalent discovered tool).
+    - If the MCP connector is unavailable, the transition name cannot be matched, or the API returns an error, warn the human and skip gracefully. Do not retry automatically.
 
-   **Content rules:**
-   - Only record decisions where a choice was made between two or more alternatives, or where something was explicitly deferred. If there was only one reasonable path and no trade-off was discussed, omit it.
-   - Do not reproduce verbatim text from files, code, or diffs.
-   - Do not describe specific security vulnerabilities by name or detail. Reference finding IDs only (e.g., "Deferred MEDIUM-3 to follow-up ticket FOO-456").
-   - Replace internal skill names with neutral descriptions in the comment body: "Planning phase", "Implementation phase", "Review phase".
-   - For each Open Item, if a follow-up Jira ticket exists, link it. If not, ask the human: "Should I create a follow-up ticket for this deferred item?"
+5.  **Post a Decision Log comment on the Jira ticket.**
 
-   **Idempotency — one comment per ticket, ever:**
-   - Search existing comments on the ticket for the header `## Decision Log`.
-   - If found: replace the full body of that comment (using its comment ID). Do not append — overwrite entirely.
-   - If not found: create a new comment.
-   - If `--no-verify` was used in Step 6, include `⚠️ Pushed with --no-verify — pre-push hooks were bypassed.` at the top of the comment body.
+    **Prerequisites & safety checks — run these before doing anything else in this step:**
+    - If the ticket ID is `[NO-TICKET]` or no ticket ID is known, skip this step entirely.
+    - Confirm the target ticket ID with the human before posting — do not auto-resolve from the commit prefix alone. Ask: "Should I post the Decision Log to `{ticket-id}`?"
+    - Use the Atlassian MCP connector to post and read comments. Discover available tools at runtime — do not assume specific tool names. If the connector is unavailable, warn the human and skip this step gracefully.
+    - Check the Jira project's visibility before posting. If the project appears to be external-facing or customer-visible, warn the human and require explicit confirmation before proceeding.
 
-   **Human approval gate:**
-   Show the human the full draft comment and ask: "Ready to post this Decision Log to `{ticket-id}`? (yes / edit / skip)" — do not post without explicit confirmation.
+    **Decision sources — use only these, in order of preference:**
+    1.  A `decisions-{ticket-id}.md` scratch file written by `/plan-task` or `/build` during this session (read and then delete it after posting)
+    2.  Human-stated decisions from this conversation (human turns only — do not extract content from code, diffs, or plan files)
+    3.  If neither is available, prompt the human to confirm or summarize decisions before drafting the comment — do not infer or fabricate
 
-   **Identity disclosure (required):** The comment body MUST begin with a Gossip Girl identity line so readers don't mistake the Decision Log for something the human typed themselves. When overwriting an existing Decision Log comment, refresh this line — do not leave the old one in place.
+    **Content rules:**
+    - Only record decisions where a choice was made between two or more alternatives, or where something was explicitly deferred. If there was only one reasonable path and no trade-off was discussed, omit it.
+    - Do not reproduce verbatim text from files, code, or diffs.
+    - Do not describe specific security vulnerabilities by name or detail. Reference finding IDs only (e.g., "Deferred MEDIUM-3 to follow-up ticket FOO-456").
+    - Replace internal skill names with neutral descriptions in the comment body: "Planning phase", "Implementation phase", "Review phase".
+    - For each Open Item, if a follow-up Jira ticket exists, link it. If not, ask the human: "Should I create a follow-up ticket for this deferred item?"
 
-   **Comment format:**
+    **Idempotency — one comment per ticket, ever:**
+    - Search existing comments on the ticket for the header `## Decision Log`.
+    - If found: replace the full body of that comment (using its comment ID). Do not append — overwrite entirely.
+    - If not found: create a new comment.
+    - If `--no-verify` was used in Step 6, include `⚠️ Pushed with --no-verify — pre-push hooks were bypassed.` at the top of the comment body.
 
-   ```
-   ## Decision Log
+    **Human approval gate:**
+    Show the human the full draft comment and ask: "Ready to post this Decision Log to `{ticket-id}`? (yes / edit / skip)" — do not post without explicit confirmation.
 
-   _Posted by Gossip Girl on behalf of @<github-or-jira-handle>._
+    **Identity disclosure (required):** The comment body MUST begin with your identity line (as defined in CLAUDE.md) so readers don't mistake the Decision Log for something the human typed themselves. When overwriting an existing Decision Log comment, refresh this line — do not leave the old one in place.
 
-   _Last updated: YYYY-MM-DD — Push SHA: {short-sha}_
+    **Comment format:**
 
-   ### Planning
-   - <decision: what was chosen and what was the alternative, e.g. "Chose REST over GraphQL — GraphQL deferred to follow-up">
+    ```
+    ## Decision Log
 
-   ### Implementation
-   - <key implementation choice approved by the human>
+    _Posted by {your identity} on behalf of @<github-or-jira-handle>._
 
-   ### Review
-   - <review outcome, e.g. "Deferred MEDIUM-3 to FOO-456">
+    _Last updated: YYYY-MM-DD — Push SHA: {short-sha}_
 
-   ### Open Items
-   - <deferred item> — [FOO-456](link) or "no follow-up ticket yet"
+    ### Planning
+    - <decision: what was chosen and what was the alternative, e.g. "Chose REST over GraphQL — GraphQL deferred to follow-up">
 
-   ⚠️ Pushed with --no-verify — pre-push hooks were bypassed.  ← include only if applicable
-   ```
+    ### Implementation
+    - <key implementation choice approved by the human>
 
-   Only include sections that have content. Omit empty sections entirely.
+    ### Review
+    - <review outcome, e.g. "Deferred MEDIUM-3 to FOO-456">
+
+    ### Open Items
+    - <deferred item> — [FOO-456](link) or "no follow-up ticket yet"
+
+    ⚠️ Pushed with --no-verify — pre-push hooks were bypassed.  ← include only if applicable
+    ```
+
+    Only include sections that have content. Omit empty sections entirely.

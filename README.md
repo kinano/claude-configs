@@ -9,6 +9,9 @@ Shared configuration files for Claude Code. Clone this repo and symlink the file
 ## Repo Structure
 
 ```
+├── .claude-plugin/      # Claude Code plugin manifest — makes this repo an installable plugin
+│   ├── plugin.json
+│   └── marketplace.json
 ├── CLAUDE.md            # Project-level instructions
 ├── settings.json        # Claude Code settings (model, hooks, permissions, etc.)
 ├── .mcp.json            # MCP server configuration
@@ -18,7 +21,7 @@ Shared configuration files for Claude Code. Clone this repo and symlink the file
 │   ├── post-edit-check.sh
 │   └── README.md
 └── skills/
-    └── *
+    └── *                # All skills, including /install for à la carte setup
 ```
 
 ## Setup on a New Machine
@@ -96,6 +99,25 @@ Use the `/add-mcp-server` skill to add an MCP server to any project. It will:
 | **redshift** | `uvx awslabs.redshift-mcp-server` | Env vars: `AWS_PROFILE`, `AWS_REGION`. |
 | **Langfuse** | HTTP/SSE — `https://us.cloud.langfuse.com/api/public/mcp` | Auth header: `Authorization: Basic ${LANGFUSE_BASE_64_TOKEN}`. See [docs](https://langfuse.com/docs/api-and-data-platform/features/mcp-server). Alternatively, use [langfuse-cli](https://github.com/langfuse/langfuse-cli) as a skill: `npx langfuse-cli get-skill`. |
 
+
+## Installing Skills Without Cloning This Repo
+
+Don't want to clone the whole thing? Use the `farty-bobo` plugin to selectively install any skill, hook, or command onto your machine.
+
+Run these two commands in Claude Code:
+
+```
+/plugin marketplace add fartybobo/farty-bobo
+/plugin install farty-bobo@farty-bobo
+```
+
+Restart Claude Code, then run:
+
+```
+/farty-bobo:install
+```
+
+It will show you the full catalog, let you pick what you want, download it to the right places, and for hooks ask whether to register them globally or scoped to the current project.
 
 ## TODOs
 

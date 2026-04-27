@@ -1,6 +1,7 @@
 ---
 name: plan-epic
 description: Breaks a large epic into sequenced child tickets and runs /plan-task on each one in order. Use when the user provides an epic (Jira ID, markdown file, or written description) that needs to be decomposed into individually planned pieces of work.
+model: opus[1m]
 ---
 
 # Epic Planning Skill

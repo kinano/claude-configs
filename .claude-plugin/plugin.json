@@ -1,0 +1,11 @@
+{
+  "name": "farty-bobo",
+  "version": "1.0.0",
+  "description": "Opinionated Claude Code skills, hooks, and commands. Use /farty-bobo:install to selectively install what you want without cloning the whole repo.",
+  "author": {
+    "name": "Kinan Faham",
+    "url": "https://fartybobo.com"
+  },
+  "repository": "https://github.com/fartybobo/farty-bobo",
+  "license": "MIT"
+}
