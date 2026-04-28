@@ -39,6 +39,7 @@ If the source is unclear, ask: "What should this page be based on? (PR, session 
 
 Ask the user for (or infer from context):
 - **Title** — propose one based on the content source; let the user override
+- **Author handle** — the GitHub or Jira username of the human requester (e.g. `@kfaham`). Used in the identity info panel. If the user doesn't provide it, infer from `git config user.email` or the Atlassian user info returned by `atlassianUserInfo`. If still unresolvable, ask explicitly.
 - **Parent page** (optional) — if the user provides a parent page URL or title, resolve its page ID via `getConfluencePage` or `getPagesInConfluenceSpace`. If not provided, the page will be created at the space root.
 
 ### Page structure
@@ -129,7 +130,12 @@ Choose a template based on the content type. The user can override the structure
 - When synthesizing from PRs or sessions, distill — don't copy-paste raw diffs or transcripts.
 - Include links to source material (PR URLs, Jira tickets, file paths) as references.
 - Do not include secrets, credentials, API keys, or sensitive internal URLs. Scan content before composing. If the user explicitly asks to include something that looks sensitive, warn and require confirmation.
-- Append an identity footer at the bottom:
+- **Prepend an identity info panel** as the very first element of the page body, before any headings or content:
+  ```
+  ℹ️ This page was created by {your identity} on behalf of @<author-handle>. Content was synthesized from <source> on <date>.
+  ```
+  Render this as a Confluence Info Panel macro (ADF `panel` node with `panelType: "info"`). If the target instance uses wiki markup, use the `{info}` macro instead. Fill in `{your identity}` from your identity as defined in the global CLAUDE.md, `<author-handle>` from the value resolved in the "Page metadata" section above, `<source>` from the content source identified in Step 2, and `<date>` as today's ISO date (YYYY-MM-DD).
+- Append an identity footer at the bottom (both disclosures are intentional — the panel is visible immediately on page open; the footer provides a standard sign-off at the end of the content):
   ```
   ---
   _Page created by {your identity}_
