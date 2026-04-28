@@ -38,10 +38,10 @@ Accept the comment body from one of:
 
 ```
 ---
-_Posted by Farty Bobo_
+_Posted by {your identity}_
 ```
 
-If the comment is an update to an existing Farty Bobo comment (footer already present), replace the existing footer rather than appending a second one.
+If the comment is an update to an existing comment with this footer already present, replace the existing footer rather than appending a second one.
 
 Format the comment in Atlassian Document Format (ADF) if required by the API, or plain markdown if the connector handles conversion. Keep the comment concise — do not pad with filler.
 

@@ -32,9 +32,9 @@ Based on the context, suggest the most appropriate type (Bug, Story, Task, Spike
 Construct a draft with the following fields — infer as much as possible from context:
 
 - **Summary**: one-line title, clear and actionable
-- **Description**: structured using this template. The description MUST open with a Farty Bobo identity line so reviewers don't mistake an agent-filed ticket for a hand-authored one:
+- **Description**: structured using this template. The description MUST open with your identity line (as defined in CLAUDE.md) so reviewers don't mistake an agent-filed ticket for a hand-authored one:
   ```
-  _Filed by Farty Bobo on behalf of @<github-or-jira-handle>._
+  _Filed by {your identity} on behalf of @<github-or-jira-handle>._
 
   ## Context
   <what is happening / what needs to be done>
@@ -47,7 +47,7 @@ Construct a draft with the following fields — infer as much as possible from c
   - <criterion 2>
 
   ## Notes
-  <any relevant links, code references, error messages. Do not attribute to "Claude Code" — this ticket was filed by Farty Bobo.>
+  <any relevant links, code references, error messages. Do not attribute to "Claude Code" — attribute to your identity as defined in CLAUDE.md.>
 
   ```
 - **Issue type**: as determined in step 3

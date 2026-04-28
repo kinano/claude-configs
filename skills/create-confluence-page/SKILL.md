@@ -132,7 +132,7 @@ Choose a template based on the content type. The user can override the structure
 - Append an identity footer at the bottom:
   ```
   ---
-  _Page created by Farty Bobo_
+  _Page created by {your identity}_
   ```
 
 ## Step 4 — Space visibility check

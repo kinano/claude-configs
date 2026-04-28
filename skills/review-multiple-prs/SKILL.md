@@ -300,7 +300,7 @@ File format:
 
 | File | Line | Severity | Comment |
 |------|------|----------|---------|
-| `path/to/file.ts` | 42 | BLOCKER | Farty Bobo says: ... |
+| `path/to/file.ts` | 42 | BLOCKER | {your identity} says: ... |
 
 ---
 
@@ -347,7 +347,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --field "comments[][path]=path/to/file.ts" \
   --field "comments[][line]=42" \
   --field "comments[][side]=RIGHT" \
-  --field "comments[][body]=Farty Bobo says: <finding>"
+  --field "comments[][body]={your identity} says: <finding>"
 ```
 
 Where `{REVIEW_EVENT}` is the value read from the draft file's `Review Event` field for that PR (`APPROVE`, `REQUEST_CHANGES`, or `COMMENT`).
@@ -357,7 +357,7 @@ Where `{REVIEW_EVENT}` is the value read from the draft file's `Review Event` fi
 ```
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --method POST \
-  --field body="Reviewed by Farty Bobo" \
+  --field body="Reviewed by {your identity}" \
   --field event="{REVIEW_EVENT}"
 ```
 
