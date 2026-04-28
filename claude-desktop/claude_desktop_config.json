@@ -7,6 +7,10 @@
     "awslabs.redshift-mcp-server": {
       "command": "/bin/bash",
       "args": ["-c", "~/.claude/scripts/redshift-mcp.sh"]
+    },
+    "contentful": {
+      "command": "/bin/bash",
+      "args": ["-c", "~/.claude/scripts/contentful-mcp.sh"]
     }
   },
   "preferences": {

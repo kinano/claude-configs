@@ -28,9 +28,9 @@ if [[ -f "$VERSIONS_FILE" ]]; then
   source "$VERSIONS_FILE"
 fi
 
-if [[ -z "${REDSHIFT_MCP_VERSION:-}" ]]; then
-  echo "ERROR: REDSHIFT_MCP_VERSION is not set. Add it to claude-desktop/mcp-versions.env." >&2
+if [[ -z "${CONTENTFUL_MCP_VERSION:-}" ]]; then
+  echo "ERROR: CONTENTFUL_MCP_VERSION is not set. Add it to claude-desktop/mcp-versions.env." >&2
   exit 1
 fi
 
-exec uvx "awslabs.redshift-mcp-server@${REDSHIFT_MCP_VERSION}"
+exec npx "@contentful/mcp-server@${CONTENTFUL_MCP_VERSION}"

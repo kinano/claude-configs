@@ -63,6 +63,7 @@ symlink_dir  "$REPO_DIR/hooks"          "$CLAUDE_DIR/hooks"
 symlink_dir  "$REPO_DIR/skills"         "$CLAUDE_DIR/skills"
 
 symlink_file "$REPO_DIR/claude-desktop/mcp-versions.env" "$CLAUDE_DIR/mcp-versions.env"
+chmod 600 "$REPO_DIR/claude-desktop/mcp-versions.env"
 symlink_file "$REPO_DIR/.mcp.json"      "$CLAUDE_DIR/.mcp.json"
 symlink_dir  "$REPO_DIR/claude-desktop/scripts" "$CLAUDE_DIR/scripts"
 

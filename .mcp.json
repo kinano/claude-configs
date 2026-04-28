@@ -1,3 +1,8 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "contentful": {
+      "command": "/bin/bash",
+      "args": ["-c", "~/.claude/scripts/contentful-mcp.sh"]
+    }
+  }
 }
