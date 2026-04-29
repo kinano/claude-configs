@@ -94,6 +94,8 @@ Use `gh` and the GitHub search API to find open PRs by the user's teammates that
 
 ## Step 2 — Fan out: one agent per PR
 
+Before fanning out, check if `.review-suppressed.md` exists in the current working directory. If it does, read it and pass its contents to each agent so they can skip previously suppressed findings.
+
 Spin up one Agent per PR using `subagent_type: general-purpose`. Name each agent after a unique American outlaw from the 1800s–1900s (e.g. Jesse James, Belle Starr, Black Bart, Dutch Schultz, Pretty Boy Floyd, Billy the Kid, Bonnie Parker). Names must be unique per session — do not reuse a name even if reviewing many PRs.
 
 Each agent receives a self-contained prompt with:
@@ -160,6 +162,8 @@ Each agent must return a JSON object with exactly these fields:
 ```
 
 Valid `verdict` values: `"APPROVE"`, `"REQUEST_CHANGES"`, `"COMMENT"`.
+
+Valid `severity` values for findings: `"BLOCKER"`, `"HIGH"`, `"MEDIUM"`, `"LOW"`, `"QUESTION"`. Agents must never assign `IRRELEVANT` — that label is set exclusively by the human in the draft file.
 
 **Line number constraint:** every finding with a `line` value must reference a line that actually appears in the diff output from `gh pr diff`. Do not invent or approximate line numbers — a line number not in the diff will cause the GitHub API to reject the comment with a 422 error.
 
@@ -323,7 +327,7 @@ Include every PR in the file, in order. Leave the cross-PR summary at the bottom
 
 Tell the user:
 
-> "Draft written to `{filename}`. Open it, make any edits you want — remove findings, soften wording, add context. **The `Review Event` field on each PR controls the formal GitHub review action (APPROVE / REQUEST_CHANGES / COMMENT) — change it if you disagree with my recommendation.** Tell me to post when ready, or say 'post as-is'."
+> "Draft written to `{filename}`. Open it, make any edits you want — remove findings, soften wording, add context. **The `Review Event` field on each PR controls the formal GitHub review action (APPROVE / REQUEST_CHANGES / COMMENT) — change it if you disagree with my recommendation.** To permanently suppress a finding so it is never raised again on this PR, change its severity to `IRRELEVANT` — I will skip posting it and record it in `.review-suppressed.md`. Tell me to post when ready, or say 'post as-is'."
 
 **Do not proceed to Step 6 until the user explicitly says to post.** This gate is not optional — the whole point is to let the human adjust before anything hits GitHub.
 
@@ -337,7 +341,15 @@ After human approval, re-read the draft file. For each PR:
 
 1. **Parse the `Review Event` field** from the draft file header. Valid values: `APPROVE`, `REQUEST_CHANGES`, `COMMENT`. The human may have changed this from the agent's original recommendation — **always use the value in the file, not the agent's original verdict.**
 
-2. **Post inline comments with the review event** using `gh api`. Use `side: "RIGHT"` for all inline comments. Only post comments for lines confirmed to exist in the diff. Use the content from the approved draft file — not the raw agent output.
+2. **Collect IRRELEVANT findings before posting.** Scan the draft file for any inline comment rows whose severity is `IRRELEVANT`. For each one:
+   - Skip it — do not post it to GitHub.
+   - Append a record to `.review-suppressed.md` (create if absent) in this format:
+     ```
+     {owner}/{repo}#{pr} | {file}:{line} | {comment summary} | suppressed {YYYY-MM-DD}
+     ```
+   This file is the persistence layer — future passes read it in Step 2 to avoid re-raising the same findings.
+
+3. **Post inline comments with the review event** using `gh api`. Use `side: "RIGHT"` for all inline comments. Only post comments for lines confirmed to exist in the diff. Use the content from the approved draft file — not the raw agent output. Skip any finding marked `IRRELEVANT`.
 
 ```
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \

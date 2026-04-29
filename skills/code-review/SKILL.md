@@ -87,11 +87,18 @@ Assign each finding a severity:
 | **HIGH** | Serious design or reliability issue. Should be fixed; needs discussion if deferred. |
 | **MEDIUM** | Real improvement but not blocking. Author should address or explicitly accept the risk. |
 | **LOW / NIT** | Style, naming, minor cleanup. Optional. Don't block merge over these. |
-| **IRRELEVANT** | The human has overridden the agent's judgement and marked a comment as irrelevant. These comments should be skipped by the agent in future turns. |
 | **QUESTION** | Unclear intent — ask for clarification before judging. |
 | **PRAISE** | Something done especially well. Say it. |
 
 Do not manufacture findings to look thorough. If the code is good, say so.
+
+### Human Override Labels
+
+These are set by the human on existing findings — the agent never assigns them to new findings.
+
+| Label | Meaning |
+|-------|---------|
+| **IRRELEVANT** | The human changed a finding's severity to `IRRELEVANT` in the draft review file. The agent must skip posting this comment and must not re-raise it in future review passes of the same PR. The `review-multiple-prs` skill persists these to `.review-suppressed.md`. |
 
 ## Step 6 — Post the review
 
