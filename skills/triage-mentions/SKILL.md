@@ -1,11 +1,11 @@
 ---
 name: triage-mentions
-description: Scan Slack, Confluence, and Jira for comments and messages that directly mention or tag the human. Present findings for selection, draft responses in a triage file, let the human APPROVE/DISMISS/RETRY each one, then dispatch approved responses using the appropriate skills.
+description: Scan Slack, Confluence, Jira, and GitHub for comments and messages that directly mention or tag the human. Present findings for selection, draft responses in a triage file, let the human APPROVE/DISMISS/RETRY each one, then dispatch approved responses using the appropriate skills.
 ---
 
 # Triage Mentions Skill
 
-Surface every place someone has pinged you and help you respond without losing your mind.
+Surface every place someone has pinged you — Slack, Jira, Confluence, GitHub — and help you respond without losing your mind.
 
 ---
 
@@ -15,10 +15,11 @@ Before doing anything else, verify the following MCP connectors are reachable:
 
 - **Slack**: `slack_search_public_and_private` (or `slack_search_public` as fallback) AND `slack_send_message` (required for dispatch — if absent, warn the human upfront that Slack replies won't be possible)
 - **Atlassian (Jira + Confluence)**: `getAccessibleAtlassianResources`
+- **GitHub**: `gh` CLI authenticated (`gh auth status`) AND `gh api` access — required for PR/issue comment scanning. If unavailable, warn and skip the GitHub scan.
 
-If *both* Slack and Atlassian are unavailable, stop and tell the human: "Neither Slack nor Atlassian connectors are configured. Fix at least one and try again."
+If all connectors are unavailable, stop and tell the human: "No connectors are configured. Fix at least one and try again."
 
-If only one connector is missing, warn the human which source will be skipped, then proceed with the available ones.
+If only some connectors are missing, warn the human which sources will be skipped, then proceed with the available ones.
 
 Resolve the human's identity once and cache for the session:
 
@@ -29,6 +30,8 @@ Resolve the human's identity once and cache for the session:
   If `atlassianUserInfo` does not return a `displayName`, fall back to `lookupJiraAccountId` using the email. If display name is still null after both attempts, stop and ask the human to provide it manually — do not proceed with CQL queries that depend on it.
 
 - **Slack member ID and handle** — use `slack_search_users` to resolve the Slack member ID for the human's name or email. Cache both the raw member ID (e.g. `U012AB3CD`) and the `@handle`. If resolution fails, warn and skip the Slack scan.
+
+- **GitHub login** — run `gh api user --jq .login` to get the canonical GitHub username. Cache it for all GitHub queries. If `gh` is not authenticated, skip the GitHub scan and warn the human.
 
 - **Human's email** — `kfaham@embarkvet.com` — use as lookup seed.
 
@@ -109,6 +112,52 @@ Capture: page title, page URL, comment ID, author, comment text (truncated to 30
 
 Limit to 30 results.
 
+### 2d. GitHub Scan
+
+Search for GitHub notifications where the human is mentioned. Run these `gh` commands sequentially:
+
+**Query 1 — PR and issue review requests / mentions:**
+```sh
+gh api "notifications?all=false&participating=true&per_page=50" \
+  --paginate --jq '.[] | select(.updated_at >= "{cutoff_iso}")'
+```
+
+This returns notifications the human is subscribed to and participating in. Filter to those with `reason` of `mention`, `review_requested`, or `comment`.
+
+**Query 2 — PRs where the human is reviewed and new comments have arrived since their last review:**
+```sh
+gh search prs \
+  --involves=@me \
+  --state=open \
+  --updated=">={cutoff_date}" \
+  --json number,title,url,repository,updatedAt \
+  --limit 30
+```
+
+For each PR returned by Query 2, fetch comments since the human's last activity:
+```sh
+gh api repos/{owner}/{repo}/pulls/{number}/comments \
+  --jq '.[] | select(.created_at >= "{cutoff_iso}" and .user.login != "{gh_login}")'
+gh api repos/{owner}/{repo}/issues/{number}/comments \
+  --jq '.[] | select(.created_at >= "{cutoff_iso}" and .user.login != "{gh_login}")'
+```
+
+**Query 3 — Issues where the human is mentioned or assigned with new comments:**
+```sh
+gh search issues \
+  --involves=@me \
+  --state=open \
+  --updated=">={cutoff_date}" \
+  --json number,title,url,repository,updatedAt \
+  --limit 30
+```
+
+For each item, capture: repo (`owner/name`), PR/issue number, title, comment author, comment text (truncated to 300 chars), URL to the specific comment, date.
+
+**Skip rule:** Skip any PR/issue where the human's most recent comment is newer than all other comments since the cutoff — they have already responded.
+
+Limit to 50 total GitHub items. Use `gh api` for pagination where needed.
+
 ---
 
 ## Phase 3 — Deduplicate and Triage List
@@ -139,6 +188,10 @@ Found {N} items requiring your attention ({date range}):
 [3] "Page title" — @author commented: "snippet..." (3d ago)
     https://...
 
+── GITHUB ─────────────────────────────────────────
+[4] owner/repo #123 — "PR title" — @author commented: "snippet..." (45m ago)
+    https://...
+
 ── ALSO ACTIVE (lower confidence) ─────────────────
 [4] JIRA  PROJ-456 — new comment, you commented here before (2d ago)
     https://...
@@ -162,6 +215,7 @@ For each selected item, draft a response. Use all available context:
 - **Slack**: Respectful and direct. No swearing. Punchy. In character per the `post-on-slack` skill tone guidance.
 - **Jira**: Professional and concise. Address the specific question or action item. No filler.
 - **Confluence**: Clear and collegial. Suitable for a shared page read by multiple people.
+- **GitHub**: Technical and to the point. PR/issue comments are read by the whole team. Address the specific code or design question. Include references to files or line numbers when relevant. No filler, no pleasantries.
 
 Write all drafts to a temporary file at:
 
@@ -183,7 +237,8 @@ Use this exact structure for each item in the file:
 **Where:** {channel name / issue key / page title}
 **Link:** {direct URL}
 **Date:** {date}
-<!-- Internal: channel_id={channel_id} thread_ts={thread_ts} (Slack only — not shown to reader) -->
+<!-- Internal: channel_id={channel_id} thread_ts={thread_ts} (Slack only) -->
+<!-- Internal: gh_repo={owner/repo} gh_number={number} gh_comment_id={id} (GitHub only) -->
 
 ### Context
 
@@ -253,6 +308,7 @@ For each APPROVE item, route to the correct skill:
 | SLACK | Use `slack_send_message` with `channel_id` and `thread_ts` from the cached metadata (HTML comment in the file). Open the message with the identity disclosure line: `_{your identity} on behalf of @{human_slack_handle}:_` then the draft body. |
 | JIRA | Invoke `/comment-jira` with the ticket ID and draft body. The skill handles ADF formatting and identity footer. |
 | CONFLUENCE | Invoke `/comment-confluence` with the page URL and draft body. The skill handles ADF formatting, identity footer, and space visibility check. |
+| GITHUB | Use `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="{body}"` to post a PR or issue comment. Open the body with the identity disclosure line: `_Posted by {your identity} on behalf of @{gh_login}._` then the draft body. For PR review comments on specific lines, use `gh api repos/{owner}/{repo}/pulls/{number}/comments` with appropriate `path`, `line`, and `commit_id` fields. |
 
 After dispatch, report outcomes:
 
