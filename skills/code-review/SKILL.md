@@ -87,6 +87,7 @@ Assign each finding a severity:
 | **HIGH** | Serious design or reliability issue. Should be fixed; needs discussion if deferred. |
 | **MEDIUM** | Real improvement but not blocking. Author should address or explicitly accept the risk. |
 | **LOW / NIT** | Style, naming, minor cleanup. Optional. Don't block merge over these. |
+| **IRRELEVANT** | The human has overridden the agent's judgement and marked a comment as irrelevant. These comments should be skipped by the agent in future turns. |
 | **QUESTION** | Unclear intent — ask for clarification before judging. |
 | **PRAISE** | Something done especially well. Say it. |
 
