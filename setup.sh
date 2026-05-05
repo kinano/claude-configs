@@ -23,6 +23,8 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 CLAUDE_DESKTOP_DIR="$HOME/Library/Application Support/Claude"
 
+CODEX_DIR="$HOME/.codex"
+
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
@@ -157,6 +159,17 @@ if ! $LINKS_ONLY; then
     warn "  echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc"
   fi
 fi
+
+# ── Codex skills ────────────────────────────────────────────────
+mkdir -p "$CODEX_DIR/skills"
+skill_count=0
+for skill_dir in "$REPO_DIR/skills"/*/; do
+  [[ -d "$skill_dir" ]] || continue
+  skill_name="$(basename "${skill_dir%/}")"
+  symlink_dir "$REPO_DIR/skills/$skill_name" "$CODEX_DIR/skills/$skill_name"
+  skill_count=$((skill_count + 1))
+done
+ok "$skill_count skill dirs symlinked to ~/.codex/skills/"
 
 # ── Done ─────────────────────────────────────────────────────────
 if ! $QUIET; then
