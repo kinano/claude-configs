@@ -1,10 +1,18 @@
 # Farty Bobo
 
-> Opinionated [Claude Code](https://docs.anthropic.com/en/docs/claude-code) configuration that actually works. Custom skills, hooks, settings, and MCP servers — clone it, symlink it, stop suffering.
+> Opinionated configuration for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Claude Desktop](https://claude.ai/download), and [Codex](https://github.com/openai/codex) (partial support) that actually works. Custom skills, hooks, settings, and MCP servers — clone it, symlink it, stop suffering.
 
 **[fartybobo.com](https://fartybobo.com)**
 
-Shared configuration files for Claude Code. Clone this repo and symlink the files into `~/.claude/` to set up a new machine quickly.
+Shared configuration files for Claude Code, Claude Desktop, and Codex. Clone this repo and symlink the files into `~/.claude/` to set up a new machine quickly.
+
+## Supported Platforms
+
+| Platform | Support |
+|----------|---------|
+| **Claude Code** | Full — skills, hooks, settings, MCP servers, commands |
+| **Claude Desktop** | Full — MCP servers via `claude_desktop_config.json` symlink |
+| **Codex** | Partial — skills load, but steps using `Agent`/`SendMessage`/`TaskCreate` silently no-op |
 
 ## Repo Structure
 

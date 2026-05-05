@@ -1,9 +1,9 @@
 ---
 layout: default
-title: "Farty Bobo — Opinionated Claude Code Configuration"
+title: "Farty Bobo — Opinionated Claude Code, Claude Desktop & Codex Configuration"
 description: >-
-  Clone it. Symlink it. Stop suffering. Opinionated Claude Code configuration
-  with custom skills, hooks, settings, and MCP servers for every machine you own.
+  Clone it. Symlink it. Stop suffering. Opinionated configuration for Claude Code,
+  Claude Desktop, and Codex with custom skills, hooks, settings, and MCP servers for every machine you own.
 image: /logos/fartybobo_angry_mascot_1360.png
 ---
 
@@ -371,8 +371,11 @@ image: /logos/fartybobo_angry_mascot_1360.png
       <p class="fb-tagline">We Got the<br>F***ing Gas</p>
       <p class="fb-desc" id="fb-desc-text">
         Every machine you own is a different hellscape of broken configs and
-        missing context. This fixes that. It's <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a>
-        — but opinionated, angry, and actually set up right.
+        missing context. This fixes that. Full support for
+        <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a>
+        and <a href="https://claude.ai/download">Claude Desktop</a>,
+        partial support for <a href="https://github.com/openai/codex">Codex</a>
+        — opinionated, angry, and actually set up right.
         Clone it. Symlink it. Stop suffering.
       </p>
     </div>
