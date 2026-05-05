@@ -17,13 +17,13 @@ This skill fetches the current state of both tooling repos live — no stale cat
 
 Run the following `gh api` commands in parallel to discover everything available.
 
-**Skills** (`embarkvetlabs/claude-configs`):
+**Skills** (`fartybobo/farty-bobo`):
 ```bash
-gh api "repos/embarkvetlabs/claude-configs/contents/skills" --jq '.[].name'
+gh api "repos/fartybobo/farty-bobo/contents/skills" --jq '.[].name'
 ```
 For each skill name, read its `SKILL.md` frontmatter (name + description):
 ```bash
-gh api "repos/embarkvetlabs/claude-configs/contents/skills/<name>/SKILL.md" --jq '.content' | base64 -d
+gh api "repos/fartybobo/farty-bobo/contents/skills/<name>/SKILL.md" --jq '.content' | base64 -d
 ```
 
 **Plugins** (`embarkvetlabs/embarkvet-claude-plugins`):
@@ -45,13 +45,13 @@ gh api "repos/embarkvetlabs/embarkvet-claude-plugins/contents/plugins/<name>/age
 gh api "repos/embarkvetlabs/embarkvet-claude-plugins/contents/plugins/<name>/agents/<agent-name>.md" --jq '.content' | base64 -d
 ```
 
-**Hooks** (`embarkvetlabs/claude-configs`):
+**Hooks** (`fartybobo/farty-bobo`):
 ```bash
-gh api "repos/embarkvetlabs/claude-configs/contents/hooks" --jq '[.[] | select(.name | endswith(".sh")) | .name]'
+gh api "repos/fartybobo/farty-bobo/contents/hooks" --jq '[.[] | select(.name | endswith(".sh")) | .name]'
 ```
 For each hook, read its header comment (first 20 lines is enough):
 ```bash
-gh api "repos/embarkvetlabs/claude-configs/contents/hooks/<name>" --jq '.content' | base64 -d | head -20
+gh api "repos/fartybobo/farty-bobo/contents/hooks/<name>" --jq '.content' | base64 -d | head -20
 ```
 
 Batch these calls aggressively — fetch all skill SKILL.md files in parallel, all plugin READMEs in parallel, etc. Do not fetch sequentially.
@@ -98,7 +98,7 @@ Print every tool discovered in step 1, grouped into three sections:
 ```
 ## Skills
 - **<name>** — <one-line description>
-  Source: embarkvetlabs/claude-configs · skills/<name>
+  Source: fartybobo/farty-bobo · skills/<name>
 
 ## Plugins
 - **<plugin-name>**
@@ -108,7 +108,7 @@ Print every tool discovered in step 1, grouped into three sections:
 
 ## Hooks
 - **<hook-filename>** — <one-line description from header comment>
-  Source: embarkvetlabs/claude-configs · hooks/<hook-filename>
+  Source: fartybobo/farty-bobo · hooks/<hook-filename>
 ```
 
 Omit a section entirely if it has no entries. After the list, add: "None of these cover your original query — you may need to build something new."
