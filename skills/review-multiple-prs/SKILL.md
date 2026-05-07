@@ -167,7 +167,7 @@ Valid `severity` values for findings: `"BLOCKER"`, `"HIGH"`, `"MEDIUM"`, `"LOW"`
 
 **Line number constraint:** every finding with a `line` value must reference a line that actually appears in the diff output from `gh pr diff`. Do not invent or approximate line numbers — a line number not in the diff will cause the GitHub API to reject the comment with a 422 error.
 
-**How to verify a line is in the diff:** Parse the `@@` hunk headers from `gh pr diff`. Each header has the form `@@ -old_start,old_count +new_start,new_count @@`. Walk through the hunk lines: skip `-` lines (deleted — LEFT side only); for each ` ` (context) or `+` (added) line, the RIGHT-side line number is `new_start + offset`, where `offset` counts only ` ` and `+` lines seen so far in that hunk (0-indexed). A finding is only valid if its `(path, line)` pair appears in this set. If you cannot confirm a line is in the diff, omit the `line` field entirely — it will land in the review body instead of as an inline comment.
+**How to verify a line is in the diff:** Parse the `@@` hunk headers from `gh pr diff --color=never`. Each header has the form `@@ -old_start,old_count +new_start,new_count @@`. For each hunk, maintain a running `new_line` counter initialized to `new_start`. For each subsequent line in the hunk: if it starts with ` ` (context) or `+` (added), add `(path, new_line)` to the valid set and increment `new_line`; if it starts with `-` (deleted), skip it without incrementing (it has no RIGHT-side line number); if it starts with `\` (the `\ No newline at end of file` sentinel), skip it without incrementing. Reset the counter when a new `@@` header is seen. Binary files produce no hunk lines and therefore an empty valid-line set for that path — any finding referencing a binary file path will be correctly demoted to the review body. A finding is only valid if its `(path, line)` pair appears in this set. If you cannot confirm a line is in the diff, omit the `line` field entirely — it will land in the review body instead of as an inline comment.
 
 ## Step 3 — Review dimensions (per PR)
 
@@ -351,38 +351,37 @@ After human approval, re-read the draft file. For each PR:
      ```
    This file is the persistence layer — future passes read it in Step 2 to avoid re-raising the same findings.
 
-3. **Pre-validate line numbers before posting.** For each PR that has inline comments, fetch its diff and build the valid RIGHT-side line set:
+3. **Pre-validate line numbers before posting.** For each PR that has inline comments, fetch its diff and build the valid RIGHT-side line set. Apply the algorithm from the Output Contract's "How to verify a line is in the diff" section. The pseudocode below illustrates the logic — apply it when constructing the API payload, not as runnable code:
 
    ```python
-   import re, subprocess
-
-   def valid_right_lines(repo, pr):
-       """Return a dict mapping path → set of valid RIGHT-side line numbers."""
-       diff = subprocess.check_output(["gh", "pr", "diff", str(pr), "-R", repo]).decode()
-       valid = {}
-       current_path = None
-       new_line = 0
-       for raw in diff.splitlines():
-           m = re.match(r'^\+\+\+ b/(.+)$', raw)
-           if m:
-               current_path = m.group(1)
-               valid.setdefault(current_path, set())
-               continue
-           m = re.match(r'^@@ -\d+(?:,\d+)? \+(\d+)', raw)
-           if m:
-               new_line = int(m.group(1))
-               continue
-           if current_path is None:
-               continue
-           if raw.startswith('+') or raw.startswith(' '):
-               valid[current_path].add(new_line)
-               new_line += 1
-           elif raw.startswith('-'):
-               pass  # LEFT side only — not a valid RIGHT-side line
-       return valid
+   # PSEUDOCODE — apply this logic mentally when building the payload
+   # gh pr diff <pr> -R <repo> --color=never
+   valid = {}          # path → set of right-side line numbers
+   current_path = None
+   new_line = 0
+   for raw in diff.splitlines():
+       if raw matches r'^\+\+\+ b/(.+)':
+           current_path = match.group(1)
+           valid[current_path] = set()
+           new_line = 0          # reset per file
+       elif raw matches r'^@@ -\d+(?:,\d+)? \+(\d+)':
+           new_line = int(match.group(1))   # reset per hunk
+       elif current_path is None:
+           continue
+       elif raw starts with '+' or ' ':
+           valid[current_path].add(new_line)
+           new_line += 1
+       elif raw starts with '-' or '\\':
+           pass   # no right-side line number
    ```
 
-   For each proposed inline comment, check if `(path, line)` is in the valid set. If it is → include it as an inline comment. If it is **not** → demote it: prepend `[{file}:{line}] ` to the comment body and include it in the PR-level review body text instead. This eliminates 422 rejections entirely.
+   For each proposed inline comment, check if `(path, line)` is in the valid set:
+   - **In the set** → include as an inline comment.
+   - **Not in the set** → demote to the review body. Append a `### Comments that could not be posted inline` section (create it if it doesn't exist) and add a bullet:
+     ```
+     - **{file}:{line}** — {comment body}
+     ```
+   This eliminates 422 rejections entirely — no silent losses.
 
 4. **Post inline comments with the review event** using `gh api`. Use `side: "RIGHT"` for all inline comments. Only post comments for lines confirmed in step 3. Use the content from the approved draft file — not the raw agent output. Skip any finding marked `IRRELEVANT`.
 
