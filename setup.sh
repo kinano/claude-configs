@@ -209,36 +209,37 @@ _prune_desktop_skill_symlinks() {
   if (( removed > 0 )); then warn "$removed stale skill symlinks removed from Claude Desktop"; fi
 }
 
-# Extracts each .skill archive from claude-desktop/skills/ into $1; prints a summary line.
-# .skill files are ZIP archives; unzip -qo overwrites existing extractions.
+# Copies each skill dir from claude-desktop/skills/ into $1; prints a summary line.
 #
-# NOTE: Claude Desktop syncs its manifest from Anthropic's servers on startup, so writing
-# to manifest.json locally has no effect. Each .skill file must be imported ONCE via the
-# Skills UI (+) to create a server-side record. After that, this extraction keeps the
-# skill's directory content up to date on every setup.sh run.
+# NOTE: Claude Desktop syncs its manifest from Anthropic's servers on startup, so local
+# manifest writes have no effect. Each skill must be imported ONCE via the Skills UI (+)
+# to create a server-side record. After that, this copy keeps the content up to date.
+# For skills that need the initial import, a .skill ZIP is generated under /tmp/.
 _install_desktop_skills() {
-  local target="$1" skill_file skill_name count=0 new_skills=""
+  local target="$1" manifest skill_dir skill_name count=0 new_skills=""
+  manifest="$(dirname "$target")/manifest.json"
   _prune_desktop_skill_symlinks "$target"
-  for skill_file in "$REPO_DIR/claude-desktop/skills/"*.skill; do
-    [[ -f "$skill_file" ]] || continue
-    skill_name="$(basename "${skill_file%.skill}")"
-    unzip -qo "$skill_file" -d "$target"
-    # Warn if this skill isn't registered server-side (directory fresh but won't appear in UI)
-    if [[ ! -d "$target/$skill_name" ]] || \
-       ! python3 -c "
+  for skill_dir in "$REPO_DIR/claude-desktop/skills"/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    skill_name="$(basename "${skill_dir%/}")"
+    rm -rf "${target:?}/$skill_name"
+    cp -r "$skill_dir" "$target/$skill_name"
+    if ! python3 -c "
 import json,sys
 m=json.load(open(sys.argv[1]))
 sys.exit(0 if any(s['name']==sys.argv[2] for s in m['skills']) else 1)
-" "$(dirname "$target")/manifest.json" "$skill_name" 2>/dev/null; then
-      new_skills="$new_skills $skill_name"
+" "$manifest" "$skill_name" 2>/dev/null; then
+      # Generate a .skill ZIP under /tmp for one-time UI import
+      (cd "$REPO_DIR/claude-desktop/skills" && zip -qr "/tmp/$skill_name.skill" "$skill_name/")
+      new_skills="$new_skills /tmp/$skill_name.skill"
     fi
-    ok "$skill_name → $target (extracted)"
+    ok "$skill_name → $target (copied)"
     count=$((count + 1))
   done
-  ok "$count skills extracted to Claude Desktop: $target"
+  ok "$count skills copied to Claude Desktop: $target"
   if [[ -n "$new_skills" ]]; then
-    warn "New skills not yet visible in Desktop (server sync required):$new_skills"
-    warn "Import each via Claude Desktop → Skills → + to register them server-side."
+    warn "New skills need a one-time import via Claude Desktop → Skills → +"
+    for f in $new_skills; do warn "  Import: $f"; done
   fi
 }
 
