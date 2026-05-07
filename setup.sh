@@ -203,7 +203,7 @@ _symlink_skills_to() {
 _prune_desktop_skill_symlinks() {
   local target="$1" removed=0 entry
   while IFS= read -r -d '' entry; do
-    rm "$entry"
+    rm -f "$entry"
     removed=$((removed + 1))
   done < <(find "$target" -maxdepth 1 -type l -print0 2>/dev/null)
   if (( removed > 0 )); then warn "$removed stale skill symlinks removed from Claude Desktop"; fi
@@ -214,32 +214,30 @@ _prune_desktop_skill_symlinks() {
 # NOTE: Claude Desktop syncs its manifest from Anthropic's servers on startup, so local
 # manifest writes have no effect. Each skill must be imported ONCE via the Skills UI (+)
 # to create a server-side record. After that, this copy keeps the content up to date.
-# For skills that need the initial import, a .skill ZIP is generated under /tmp/.
+# For skills that need the initial import, a .skill ZIP is generated under a tmp dir.
 _install_desktop_skills() {
-  local target="$1" manifest skill_dir skill_name count=0 new_skills=""
-  manifest="$(dirname "$target")/manifest.json"
+  local target="$1" skill_dir skill_name count=0
+  local -a new_skills=()
+  local skill_tmp="${TMPDIR:-/tmp}/farty-bobo-skills"
+  mkdir -p "$skill_tmp"
   _prune_desktop_skill_symlinks "$target"
   for skill_dir in "$REPO_DIR/claude-desktop/skills"/*/; do
     [[ -d "$skill_dir" ]] || continue
     skill_name="$(basename "${skill_dir%/}")"
-    rm -rf "${target:?}/$skill_name"
+    [[ -n "$skill_name" && "$skill_name" != *"/"* && "$skill_name" != *".."* ]] || continue
+    rm -rf "${target:?}/${skill_name:?}"
     cp -r "$skill_dir" "$target/$skill_name"
-    if ! python3 -c "
-import json,sys
-m=json.load(open(sys.argv[1]))
-sys.exit(0 if any(s['name']==sys.argv[2] for s in m['skills']) else 1)
-" "$manifest" "$skill_name" 2>/dev/null; then
-      # Generate a .skill ZIP under /tmp for one-time UI import
-      (cd "$REPO_DIR/claude-desktop/skills" && zip -qr "/tmp/$skill_name.skill" "$skill_name/")
-      new_skills="$new_skills /tmp/$skill_name.skill"
-    fi
+    # Always generate a .skill ZIP — manifest is server-managed and cannot be checked locally.
+    (cd "$REPO_DIR/claude-desktop/skills" && zip -qr "$skill_tmp/$skill_name.skill" "$skill_name/")
+    new_skills+=("$skill_tmp/$skill_name.skill")
     ok "$skill_name → $target (copied)"
     count=$((count + 1))
   done
-  ok "$count skills copied to Claude Desktop: $target"
-  if [[ -n "$new_skills" ]]; then
-    warn "New skills need a one-time import via Claude Desktop → Skills → +"
-    for f in $new_skills; do warn "  Import: $f"; done
+  local noun="skill"; if (( count != 1 )); then noun="skills"; fi
+  ok "$count $noun copied to Claude Desktop: $target"
+  if (( ${#new_skills[@]} > 0 )); then
+    warn "Import each skill once via Claude Desktop → Skills → + (server-side registration required)"
+    local f; for f in "${new_skills[@]}"; do warn "  Import: $f"; done
   fi
 }
 

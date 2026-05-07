@@ -71,7 +71,7 @@ Shared configuration files for Claude Code, Claude Desktop, and Codex. Clone thi
    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
    ```
 
-5. **Import Desktop skills once.** If `setup.sh` warns about new skills not visible in Desktop, open Claude Desktop → Skills → `+` and import each `.skill` file from `claude-desktop/skills/`. This is a one-time step per skill — it registers the skill server-side. Future `setup.sh` runs keep the skill content up to date automatically.
+5. **Import Desktop skills once.** `setup.sh` always generates `.skill` ZIP archives under `$TMPDIR/farty-bobo-skills/` (e.g. `/var/folders/.../farty-bobo-skills/`). Open Claude Desktop → Skills → `+` and import each `.skill` file from that directory. This is a one-time step per skill — it registers the skill server-side. Future `setup.sh` runs keep the skill content up to date automatically.
 
 6. **Restart Claude Desktop** for MCP server changes to take effect.
 
