@@ -209,15 +209,48 @@ _prune_desktop_skill_symlinks() {
   if (( removed > 0 )); then warn "$removed stale skill symlinks removed from Claude Desktop"; fi
 }
 
+# Upserts a skill entry into manifest.json, reading name+description from SKILL.md frontmatter.
+# Skips silently if the skill is already registered.
+_register_skill_in_manifest() {
+  local manifest="$1" skill_dir="$2"
+  [[ -f "$manifest" && -f "$skill_dir/SKILL.md" ]] || return 0
+  python3 - "$manifest" "$skill_dir/SKILL.md" <<'PYEOF'
+import json, re, sys, time
+manifest_path, skill_md_path = sys.argv[1], sys.argv[2]
+content = open(skill_md_path).read()
+name_m = re.search(r'^name:\s*(.+)', content, re.MULTILINE)
+if not name_m:
+    sys.exit(0)
+name = name_m.group(1).strip()
+desc_block = re.search(r'^description:\s*>[-]?\n((?:[ \t]+[^\n]*\n?)*)', content, re.MULTILINE)
+if desc_block:
+    description = ' '.join(l.strip() for l in desc_block.group(1).splitlines() if l.strip())
+else:
+    desc_inline = re.search(r'^description:\s*(.+)', content, re.MULTILINE)
+    description = desc_inline.group(1).strip() if desc_inline else ''
+with open(manifest_path) as f:
+    m = json.load(f)
+if any(s['name'] == name for s in m['skills']):
+    sys.exit(0)
+m['skills'].insert(0, {'skillId': name, 'name': name, 'description': description,
+                        'creatorType': 'user', 'updatedAt': None, 'enabled': True})
+m['lastUpdated'] = int(time.time() * 1000)
+with open(manifest_path, 'w') as f:
+    json.dump(m, f, indent=2)
+PYEOF
+}
+
 # Extracts each .skill archive from claude-desktop/skills/ into $1; prints a summary line.
 # .skill files are ZIP archives; unzip -qo overwrites existing extractions.
 _install_desktop_skills() {
-  local target="$1" skill_file skill_name count=0
+  local target="$1" manifest skill_file skill_name count=0
+  manifest="$(dirname "$target")/manifest.json"
   _prune_desktop_skill_symlinks "$target"
   for skill_file in "$REPO_DIR/claude-desktop/skills/"*.skill; do
     [[ -f "$skill_file" ]] || continue
     skill_name="$(basename "${skill_file%.skill}")"
     unzip -qo "$skill_file" -d "$target"
+    _register_skill_in_manifest "$manifest" "$target/$skill_name"
     ok "$skill_name → $target (extracted)"
     count=$((count + 1))
   done
