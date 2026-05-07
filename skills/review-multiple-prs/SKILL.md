@@ -167,6 +167,8 @@ Valid `severity` values for findings: `"BLOCKER"`, `"HIGH"`, `"MEDIUM"`, `"LOW"`
 
 **Line number constraint:** every finding with a `line` value must reference a line that actually appears in the diff output from `gh pr diff`. Do not invent or approximate line numbers — a line number not in the diff will cause the GitHub API to reject the comment with a 422 error.
 
+**How to verify a line is in the diff:** Parse the `@@` hunk headers from `gh pr diff --color=never`. Each header has the form `@@ -old_start,old_count +new_start,new_count @@`. For each hunk, maintain a running `new_line` counter initialized to `new_start`. For each subsequent line in the hunk: if it starts with ` ` (context) or `+` (added), add `(path, new_line)` to the valid set and increment `new_line`; if it starts with `-` (deleted), skip it without incrementing (it has no RIGHT-side line number); if it starts with `\` (the `\ No newline at end of file` sentinel), skip it without incrementing. Reset the counter when a new `@@` header is seen. Binary files produce no hunk lines and therefore an empty valid-line set for that path — any finding referencing a binary file path will be correctly demoted to the review body. A finding is only valid if its `(path, line)` pair appears in this set. If you cannot confirm a line is in the diff, omit the `line` field entirely — it will land in the review body instead of as an inline comment.
+
 ## Step 3 — Review dimensions (per PR)
 
 Each agent evaluates:
@@ -349,7 +351,39 @@ After human approval, re-read the draft file. For each PR:
      ```
    This file is the persistence layer — future passes read it in Step 2 to avoid re-raising the same findings.
 
-3. **Post inline comments with the review event** using `gh api`. Use `side: "RIGHT"` for all inline comments. Only post comments for lines confirmed to exist in the diff. Use the content from the approved draft file — not the raw agent output. Skip any finding marked `IRRELEVANT`.
+3. **Pre-validate line numbers before posting.** For each PR that has inline comments, fetch its diff and build the valid RIGHT-side line set. Apply the algorithm from the Output Contract's "How to verify a line is in the diff" section. The pseudocode below illustrates the logic — apply it when constructing the API payload, not as runnable code:
+
+   ```python
+   # PSEUDOCODE — apply this logic mentally when building the payload
+   # gh pr diff <pr> -R <repo> --color=never
+   valid = {}          # path → set of right-side line numbers
+   current_path = None
+   new_line = 0
+   for raw in diff.splitlines():
+       if raw matches r'^\+\+\+ b/(.+)':
+           current_path = match.group(1)
+           valid[current_path] = set()
+           new_line = 0          # reset per file
+       elif raw matches r'^@@ -\d+(?:,\d+)? \+(\d+)':
+           new_line = int(match.group(1))   # reset per hunk
+       elif current_path is None:
+           continue
+       elif raw starts with '+' or ' ':
+           valid[current_path].add(new_line)
+           new_line += 1
+       elif raw starts with '-' or '\\':
+           pass   # no right-side line number
+   ```
+
+   For each proposed inline comment, check if `(path, line)` is in the valid set:
+   - **In the set** → include as an inline comment.
+   - **Not in the set** → demote to the review body. Append a `### Comments that could not be posted inline` section (create it if it doesn't exist) and add a bullet:
+     ```
+     - **{file}:{line}** — {comment body}
+     ```
+   This eliminates 422 rejections entirely — no silent losses.
+
+4. **Post inline comments with the review event** using `gh api`. Use `side: "RIGHT"` for all inline comments. Only post comments for lines confirmed in step 3. Use the content from the approved draft file — not the raw agent output. Skip any finding marked `IRRELEVANT`.
 
 ```
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
@@ -364,7 +398,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
 
 Where `{REVIEW_EVENT}` is the value read from the draft file's `Review Event` field for that PR (`APPROVE`, `REQUEST_CHANGES`, or `COMMENT`).
 
-3. **If a PR has no inline comments** but the review event is `APPROVE` or `REQUEST_CHANGES`, submit the review without comments:
+5. **If a PR has no inline comments** (or all were demoted to body text) and the review event is `APPROVE` or `REQUEST_CHANGES`, submit the review without comments:
 
 ```
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
