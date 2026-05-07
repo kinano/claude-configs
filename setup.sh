@@ -209,52 +209,37 @@ _prune_desktop_skill_symlinks() {
   if (( removed > 0 )); then warn "$removed stale skill symlinks removed from Claude Desktop"; fi
 }
 
-# Upserts a skill entry into manifest.json, reading name+description from SKILL.md frontmatter.
-# Skips silently if the skill is already registered.
-_register_skill_in_manifest() {
-  local manifest="$1" skill_dir="$2"
-  [[ -f "$manifest" && -f "$skill_dir/SKILL.md" ]] || return 0
-  python3 - "$manifest" "$skill_dir/SKILL.md" <<'PYEOF'
-import json, re, sys, time
-manifest_path, skill_md_path = sys.argv[1], sys.argv[2]
-content = open(skill_md_path).read()
-name_m = re.search(r'^name:\s*(.+)', content, re.MULTILINE)
-if not name_m:
-    sys.exit(0)
-name = name_m.group(1).strip()
-desc_block = re.search(r'^description:\s*>[-]?\n((?:[ \t]+[^\n]*\n?)*)', content, re.MULTILINE)
-if desc_block:
-    description = ' '.join(l.strip() for l in desc_block.group(1).splitlines() if l.strip())
-else:
-    desc_inline = re.search(r'^description:\s*(.+)', content, re.MULTILINE)
-    description = desc_inline.group(1).strip() if desc_inline else ''
-with open(manifest_path) as f:
-    m = json.load(f)
-if any(s['name'] == name for s in m['skills']):
-    sys.exit(0)
-m['skills'].insert(0, {'skillId': name, 'name': name, 'description': description,
-                        'creatorType': 'user', 'updatedAt': None, 'enabled': True})
-m['lastUpdated'] = int(time.time() * 1000)
-with open(manifest_path, 'w') as f:
-    json.dump(m, f, indent=2)
-PYEOF
-}
-
 # Extracts each .skill archive from claude-desktop/skills/ into $1; prints a summary line.
 # .skill files are ZIP archives; unzip -qo overwrites existing extractions.
+#
+# NOTE: Claude Desktop syncs its manifest from Anthropic's servers on startup, so writing
+# to manifest.json locally has no effect. Each .skill file must be imported ONCE via the
+# Skills UI (+) to create a server-side record. After that, this extraction keeps the
+# skill's directory content up to date on every setup.sh run.
 _install_desktop_skills() {
-  local target="$1" manifest skill_file skill_name count=0
-  manifest="$(dirname "$target")/manifest.json"
+  local target="$1" skill_file skill_name count=0 new_skills=""
   _prune_desktop_skill_symlinks "$target"
   for skill_file in "$REPO_DIR/claude-desktop/skills/"*.skill; do
     [[ -f "$skill_file" ]] || continue
     skill_name="$(basename "${skill_file%.skill}")"
     unzip -qo "$skill_file" -d "$target"
-    _register_skill_in_manifest "$manifest" "$target/$skill_name"
+    # Warn if this skill isn't registered server-side (directory fresh but won't appear in UI)
+    if [[ ! -d "$target/$skill_name" ]] || \
+       ! python3 -c "
+import json,sys
+m=json.load(open(sys.argv[1]))
+sys.exit(0 if any(s['name']==sys.argv[2] for s in m['skills']) else 1)
+" "$(dirname "$target")/manifest.json" "$skill_name" 2>/dev/null; then
+      new_skills="$new_skills $skill_name"
+    fi
     ok "$skill_name → $target (extracted)"
     count=$((count + 1))
   done
   ok "$count skills extracted to Claude Desktop: $target"
+  if [[ -n "$new_skills" ]]; then
+    warn "New skills not yet visible in Desktop (server sync required):$new_skills"
+    warn "Import each via Claude Desktop → Skills → + to register them server-side."
+  fi
 }
 
 # ── Claude Desktop skills (macOS only) ──────────────────────────

@@ -53,7 +53,7 @@ Shared configuration files for Claude Code, Claude Desktop, and Codex. Clone thi
    - Create `~/.claude` if needed
    - Symlink all config files and directories into `~/.claude`
    - Symlink `claude_desktop_config.json` into Claude Desktop's config dir (macOS)
-   - Extract each `.skill` archive from `claude-desktop/skills/` into Claude Desktop's active skills-plugin slot (macOS; warns if not initialized yet)
+   - Extract each `.skill` archive from `claude-desktop/skills/` into Claude Desktop's active skills-plugin slot (macOS; warns if a skill needs a one-time UI import to register server-side)
    - Create `.env` from `.env.sample` if it doesn't exist
    - Install the pinned node version via nvm and symlink it to `~/.local/bin`
 
@@ -71,7 +71,9 @@ Shared configuration files for Claude Code, Claude Desktop, and Codex. Clone thi
    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
    ```
 
-5. **Restart Claude Desktop** for MCP server changes to take effect.
+5. **Import Desktop skills once.** If `setup.sh` warns about new skills not visible in Desktop, open Claude Desktop → Skills → `+` and import each `.skill` file from `claude-desktop/skills/`. This is a one-time step per skill — it registers the skill server-side. Future `setup.sh` runs keep the skill content up to date automatically.
+
+6. **Restart Claude Desktop** for MCP server changes to take effect.
 
 6. **Verify**
 
