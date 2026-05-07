@@ -160,29 +160,51 @@ if ! $LINKS_ONLY; then
   fi
 fi
 
-# ── Claude Desktop skills (macOS only) ──────────────────────────
-# Dynamically locate the active skills-plugin slot by picking the most
-# recently modified <outer>/<inner> directory pair under skills-plugin.
-# Claude Desktop rotates the inner UUID on updates, so we sort by mtime.
-if [[ "$OSTYPE" == darwin* ]]; then
-  _desktop_skills_dir() {
-    local base="$CLAUDE_DESKTOP_DIR/local-agent-mode-sessions/skills-plugin"
-    [[ -d "$base" ]] || return 0
-    local slot
-    slot=$(ls -dt "$base"/*/* 2>/dev/null | head -1)
-    [[ -n "$slot" && -d "$slot/skills" ]] && echo "$slot/skills"
-  }
+# ── Helpers ─────────────────────────────────────────────────────
 
-  DESKTOP_SKILLS_DIR="$(_desktop_skills_dir)"
+# Returns the newest direct subdirectory of $1 by mtime, NUL-safe.
+# Works correctly even when the path contains spaces.
+_newest_subdir() {
+  local parent="$1" newest="" newest_mtime=0 mtime
+  [[ -d "$parent" ]] || return 1
+  while IFS= read -r -d '' dir; do
+    mtime=$(stat -f '%m' "$dir" 2>/dev/null) || continue
+    (( mtime > newest_mtime )) && { newest_mtime=$mtime; newest="$dir"; }
+  done < <(find "$parent" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+  [[ -n "$newest" ]] || return 1
+  echo "$newest"
+}
+
+# Echos the active Claude Desktop skills dir, or returns 1 if not found.
+# The path is: skills-plugin/<newest-outer>/<newest-inner>/skills/
+# Claude Desktop rotates the inner UUID on app updates.
+_desktop_skills_dir() {
+  local base="$CLAUDE_DESKTOP_DIR/local-agent-mode-sessions/skills-plugin"
+  local outer inner
+  outer=$(_newest_subdir "$base")    || return 1
+  inner=$(_newest_subdir "$outer")   || return 1
+  [[ -d "$inner/skills" ]]           || return 1
+  echo "$inner/skills"
+}
+
+# Symlinks every skill dir from the repo into $1. Prints the count.
+_symlink_skills_to() {
+  local target="$1" skill_dir skill_name count=0
+  for skill_dir in "$REPO_DIR/skills"/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    skill_name="$(basename "${skill_dir%/}")"
+    symlink_dir "$REPO_DIR/skills/$skill_name" "$target/$skill_name"
+    count=$((count + 1))
+  done
+  echo "$count"
+}
+
+# ── Claude Desktop skills (macOS only) ──────────────────────────
+if [[ "$OSTYPE" == darwin* ]]; then
+  DESKTOP_SKILLS_DIR="$(_desktop_skills_dir)" || true
   if [[ -n "$DESKTOP_SKILLS_DIR" ]]; then
-    desktop_skill_count=0
-    for skill_dir in "$REPO_DIR/skills"/*/; do
-      [[ -d "$skill_dir" ]] || continue
-      skill_name="$(basename "${skill_dir%/}")"
-      symlink_dir "$REPO_DIR/skills/$skill_name" "$DESKTOP_SKILLS_DIR/$skill_name"
-      desktop_skill_count=$((desktop_skill_count + 1))
-    done
-    ok "$desktop_skill_count skill dirs symlinked to Claude Desktop: $DESKTOP_SKILLS_DIR"
+    count=$(_symlink_skills_to "$DESKTOP_SKILLS_DIR")
+    ok "$count skill dirs symlinked to Claude Desktop: $DESKTOP_SKILLS_DIR"
   else
     warn "Claude Desktop skills-plugin dir not found — open Claude Desktop, enable at least one skill, then rerun setup.sh"
   fi
@@ -190,14 +212,8 @@ fi
 
 # ── Codex skills ────────────────────────────────────────────────
 mkdir -p "$CODEX_DIR/skills"
-skill_count=0
-for skill_dir in "$REPO_DIR/skills"/*/; do
-  [[ -d "$skill_dir" ]] || continue
-  skill_name="$(basename "${skill_dir%/}")"
-  symlink_dir "$REPO_DIR/skills/$skill_name" "$CODEX_DIR/skills/$skill_name"
-  skill_count=$((skill_count + 1))
-done
-ok "$skill_count skill dirs symlinked to ~/.codex/skills/"
+count=$(_symlink_skills_to "$CODEX_DIR/skills")
+ok "$count skill dirs symlinked to ~/.codex/skills/"
 
 # ── Done ─────────────────────────────────────────────────────────
 if ! $QUIET; then
