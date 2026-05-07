@@ -142,6 +142,7 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "theme": "dark",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "skills": {
