@@ -501,7 +501,7 @@ Each reply agent receives:
 2. Ask the human: approve as-is, edit, or skip each draft. Wait for answers to `questions_for_human`.
 3. Only after approval: send follow-up to the agent to post approved replies.
    - All replies posted to GitHub must open with `_Posted by Farty Bobo on behalf of @{gh_login}._`
-   - For review thread replies: use `first_comment_rest_id` from the `review_thread_replies` entry (provided by `check-pr-threads.sh`). Post via `gh api -X POST repos/{owner}/{repo}/pulls/comments/{first_comment_rest_id}/replies -f body="..."`. This is the REST integer comment ID, not the GraphQL node ID.
+   - For review thread replies: use `first_comment_rest_id` from the `review_thread_replies` entry (provided by `check-pr-threads.sh`). Post via `gh api -X POST repos/{owner}/{repo}/pulls/{number}/comments/{first_comment_rest_id}/replies -f body="..."`. This is the REST integer comment ID, not the GraphQL node ID.
    - For PR-level comments: post via `gh api repos/{owner}/{repo}/issues/{number}/comments`
 4. Wait for completion before the next REPLY PR.
 
