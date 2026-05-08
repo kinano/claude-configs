@@ -1,31 +1,62 @@
 ---
 name: pr-action-board
-description: Find your open PRs that are either approved or have new unresolved/unresponded comments, compile them into a triage board with human-annotatable MERGE/ADDRESS/SKIP actions, then dispatch dedicated agents to execute each decision. Use when the user asks "what PRs do I need to deal with?", "triage my open PRs", "which PRs need my attention?", or similar.
+description: Find your open PRs that are either approved or have new unresolved/unresponded comments, compile them into a triage board with human-annotatable MERGE/ADDRESS/REPLY/SKIP actions, then dispatch dedicated agents to execute each decision. Use when the user asks "what PRs do I need to deal with?", "triage my open PRs", "which PRs need my attention?", or similar.
 disable-model-invocation: false
 ---
 
 # PR Action Board Skill
 
-Surface every open PR you authored that needs your attention — approved and waiting to merge, or sitting on unanswered reviewer comments — and let you decide what to do about each one from a single annotated file.
+Surface every PR that needs your attention in one annotated triage file:
+
+- **Your own open PRs** — approved and waiting to merge, or sitting on unanswered reviewer comments.
+- **Others' PRs where you need to respond** — someone replied to your comment, tagged you directly, tagged one of your teams, or the PR description mentions you or a team you belong to.
+
+---
+
+## Helper Scripts
+
+All deterministic state checks in this skill are performed by helper scripts co-located with the skill. Before Phase 2, locate the script directory:
+
+```sh
+SCRIPT_DIR=$(find ~ -maxdepth 7 \
+  -path "*/farty-bobo/skills/pr-action-board/scripts" \
+  -type d 2>/dev/null | head -1)
+
+if [[ -z "$SCRIPT_DIR" ]]; then
+  echo "ERROR: farty-bobo scripts not found. Clone the farty-bobo repo first." >&2
+  exit 1
+fi
+```
+
+Cache `$SCRIPT_DIR` for use throughout all phases.
+
+Scripts available (all executable, all take stdin/stdout, all output JSON):
+
+| Script | Purpose |
+|--------|---------|
+| `get-teams.sh <org>` | Returns `[{slug, name, mention}]` for the user's teams in one org |
+| `find-mention-prs.sh <login> <org_or_empty> <teams_json>` | Open PRs (not mine) where I or my teams are mentioned and I haven't responded |
+| `find-thread-reply-prs.sh <login> <org_or_empty>` | Open PRs (not mine) where I commented and got unresponded replies |
+| `check-pr-threads.sh <login> <owner> <repo> <pr_number>` | Per-PR check: unresolved review threads + issue comment chains with unresponded replies |
 
 ---
 
 ## Phase 1 — Preflight
 
 1. Run `gh auth status`. If unauthenticated, stop and tell the human to run `gh auth login`.
-2. Resolve the GitHub login once and cache it for the session:
+2. Resolve the GitHub login once and cache it:
    ```sh
    gh api user --jq .login
    ```
    Do NOT assume a login from git config, memory, or any other source.
-3. **Prompt the human to choose the org scope.** Fetch the list of orgs the authenticated user belongs to:
+3. **Prompt the human to choose the org scope.** Fetch the list of orgs:
    ```sh
    gh api user/orgs --jq '.[].login'
    ```
-   Present the list to the human and ask them to pick one, or to type "all" to scan across all orgs with no restriction:
+   Present the list and ask the human to pick one, or "all" to scan across all orgs:
 
    ```
-   Which org should I scan for your PRs?
+   Which org should I scan?
 
      1) embarkvet
      2) acme-corp
@@ -35,17 +66,16 @@ Surface every open PR you authored that needs your attention — approved and wa
    ```
 
    Do NOT proceed until the human responds. Cache their choice as `{scope}`:
-   - If they pick a specific org: `{scope}` = `--owner {org}` for all `gh search prs` calls.
-   - If they say "all" or choose the "all orgs" option: `{scope}` = `` (no scope flag).
-   - If `gh api user/orgs` returns an empty list or an error, warn the human and default to asking them to type an org name manually or say "all".
+   - Specific org → `{scope}` = `--owner {org}` for `gh search prs` calls; org name alone for scripts.
+   - "all" → `{scope}` = `` (no flag); pass empty string to scripts.
 
 ---
 
 ## Phase 2 — Scan for Actionable PRs
 
-Run both queries in parallel. Collect and merge the results — deduplicate by PR URL.
+Run phases 2a, 2b, and 2c **in parallel**. Collect and deduplicate by URL.
 
-### 2a. Approved PRs
+### 2a. My Approved PRs
 
 ```sh
 gh search prs \
@@ -54,12 +84,12 @@ gh search prs \
   --review=approved \
   --json number,title,url,repository,createdAt,updatedAt,isDraft,labels \
   --limit 100 \
-  {scope}   # --owner {org} or empty — set in Phase 1
+  {scope}
 ```
 
 Exclude drafts (`isDraft: true`) unless the human explicitly asked to include them.
 
-### 2b. PRs with new unresponded comments
+### 2b. My PRs with New Unresponded Comments
 
 ```sh
 gh search prs \
@@ -67,21 +97,21 @@ gh search prs \
   --state=open \
   --json number,title,url,repository,createdAt,updatedAt,isDraft \
   --limit 100 \
-  {scope}   # --owner {org} or empty — set in Phase 1
+  {scope}
 ```
 
-For each PR returned, run the following in parallel (batch up to 10 at a time to avoid rate limits):
+For each PR, run in parallel (batch up to 10 at a time):
 
 ```sh
-# Get all PR-level conversation comments (issue-style — no resolution concept here)
+# PR-level conversation comments
 gh api repos/{owner}/{repo}/issues/{number}/comments \
   --jq '[.[] | {login: .user.login, created_at: .created_at, body: .body}] | sort_by(.created_at)'
 
-# Get formal review states
+# Formal review states
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --jq '[.[] | {login: .user.login, state: .state, submitted_at: .submitted_at, body: .body}] | sort_by(.submitted_at)'
 
-# Get inline review threads WITH resolution status (GraphQL — REST does not expose isResolved)
+# Inline review threads WITH resolution status (GraphQL)
 gh api graphql -f query='
   query($owner: String!, $repo: String!, $number: Int!) {
     repository(owner: $owner, name: $repo) {
@@ -107,27 +137,70 @@ gh api graphql -f query='
 ' -f owner="{owner}" -f repo="{repo}" -F number={number}
 ```
 
-**Identity anchor:** Use the cached `{gh_login}` from Phase 1 as the authoritative identity for all comment filtering. A comment or review is "from the human" if and only if its `author.login` (GraphQL) or `user.login` (REST) equals `{gh_login}`. Do not infer identity from PR author, assignee, or any other field.
+**Identity anchor:** Use the cached `{gh_login}` from Phase 1 as the authoritative identity. A comment or review is "from the human" if and only if `author.login` / `user.login` equals `{gh_login}`.
 
-**Inline thread filtering rules — apply before counting or surfacing anything:**
-- **Exclude resolved threads** (`isResolved: true`). A resolved thread has been deliberately closed by a reviewer or the author — it is not actionable.
-- **Exclude outdated threads** (`isOutdated: true`). These reference code that no longer exists in the diff.
+**Inline thread filtering:**
+- Exclude `isResolved: true` and `isOutdated: true` threads.
 - Only count and surface threads where `isResolved: false` AND `isOutdated: false`.
 
-**Keep a PR in the "unresponded" list if ANY of the following is true (after thread filtering above):**
-- A reviewer left a conversation comment (issue-style) AFTER the human's last comment on this PR AND the human has not replied since (compare `user.login` against `{gh_login}`).
-- A reviewer's formal review state is `CHANGES_REQUESTED` and there is no subsequent comment where `user.login == {gh_login}` acknowledging it.
-- An unresolved, non-outdated inline review thread has comments from reviewers where the last reply's `author.login` is NOT `{gh_login}`.
+**Keep a PR in the unresponded list if ANY of:**
+- A reviewer left a conversation comment AFTER the human's last comment and the human has not replied since.
+- A reviewer's formal review state is `CHANGES_REQUESTED` with no subsequent human acknowledgment.
+- An unresolved, non-outdated inline thread where the last reply's `author.login` is NOT `{gh_login}`.
 
-**Skip the PR (do not include it) if:**
-- The human's most recent activity on that PR (any comment/review where login equals `{gh_login}`) is newer than all unresolved reviewer activity — they have already responded.
-- The only reviewer activity is a simple `APPROVED` with no comments or concerns.
+**Skip if:**
+- The human's most recent activity on the PR is newer than all unresolved reviewer activity.
+- The only reviewer activity is a simple `APPROVED` with no comments.
 
-**Unresponded comment count** (the number shown in the triage table and PR detail section) **must only include unresolved, non-outdated threads and unacknowledged conversation comments.** Never count resolved or outdated threads toward this number.
+### 2c. Others' PRs — Where I Need to Respond
 
-### 2c. Enrich each PR
+This phase uses the helper scripts to deterministically find open PRs authored by others where:
+- Someone replied to a comment I left (and I haven't responded to the reply), **or**
+- A comment tags me directly (`@{gh_login}`), **or**
+- A comment or PR description tags one of my teams, **or**
+- The PR description itself tags me directly —
 
-For every unique PR collected from 2a and 2b (up to 50 total after deduplication — if more, keep the 50 most recently updated by `updatedAt` descending, warn the human, and list the dropped PR numbers so they know they were skipped), fetch enrichment:
+and I have **not** commented on the PR since the triggering event.
+
+Run 2c-i first (TEAMS_JSON is needed by 2c-ii). Once 2c-i completes, run 2c-ii and 2c-iii **in parallel** — 2c-iii has no dependency on TEAMS_JSON.
+
+#### 2c-i. Team membership (prerequisite for 2c-ii only)
+
+```sh
+TEAMS_JSON=$("$SCRIPT_DIR/get-teams.sh" "{org}")
+# If scope is "all orgs", call get-teams.sh for each org individually and merge results.
+# If get-teams.sh errors or returns [], proceed with TEAMS_JSON="[]".
+```
+
+#### 2c-ii. Mention PRs (run after TEAMS_JSON is available)
+
+```sh
+MENTION_PRS=$("$SCRIPT_DIR/find-mention-prs.sh" \
+  "{gh_login}" "{org_or_empty}" "$TEAMS_JSON")
+```
+
+Output is a JSON array of PRs. Each entry includes `reason` (`"direct-mention"`, `"team-mention"`, or `"description-mention"`), `mentioned_at`, and the full PR metadata.
+
+**"Has not responded" rule:** `find-mention-prs.sh` already filters out PRs where the user posted a comment after `mentioned_at`. No additional filtering needed.
+
+#### 2c-iii. Thread reply PRs (run after TEAMS_JSON step completes)
+
+```sh
+THREAD_REPLY_PRS=$("$SCRIPT_DIR/find-thread-reply-prs.sh" \
+  "{gh_login}" "{org_or_empty}")
+```
+
+Output is a JSON array of PRs. Each entry includes `reason: "thread-reply"`, plus `review_thread_replies` and `issue_comment_replies` arrays with the specific unresponded content.
+
+#### 2c-iv. Merge and deduplicate
+
+Combine `MENTION_PRS` and `THREAD_REPLY_PRS`. Deduplicate by URL, preserving all distinct `reason` values. If a PR appears with multiple reasons (e.g., both a thread reply and a direct mention), set `reason` to `"multiple"` and list all individual reasons in a `reasons` array.
+
+Cap at 30 PRs from Phase 2c (most recently updated first). Warn the human and list dropped PR numbers if more are found.
+
+### 2d. Enrich All PRs
+
+For every unique PR from 2a, 2b, and 2c (up to 50 total — if more, keep the 50 most recently updated, warn and list dropped numbers):
 
 ```sh
 gh pr view {number} --repo {owner}/{repo} \
@@ -135,24 +208,23 @@ gh pr view {number} --repo {owner}/{repo} \
 ```
 
 Derive per PR:
-- **Approvers**: unique logins from `reviews` where `state == "APPROVED"`, using the latest review per reviewer (ignore earlier reviews superseded by a later one from the same person).
-- **Pending reviewers**: entries in `reviewRequests` who haven't responded yet.
-- **CI status**: summarize `statusCheckRollup` → `passing`, `failing`, `pending`, or `none`.
-- **Merge readiness**: map `mergeable` + `mergeStateStatus` → `ready`, `conflicts`, `blocked`, or `unknown`.
-- **Unresponded comment count**: count of reviewer comments/reviews with no human reply (from Phase 2b analysis).
-- **Reason for inclusion**: `approved` | `unresponded-comments` | `both`.
-- **CHANGES_REQUESTED override**: If any reviewer's latest review state is `CHANGES_REQUESTED` (regardless of whether other reviewers have approved), override the default action to `ADDRESS` and set `Reason: both` if the PR was also in the approved set. Never default to `MERGE` for a PR with an active unresolved `CHANGES_REQUESTED`.
+- **Approvers**: unique logins from `reviews` where `state == "APPROVED"`, latest review per reviewer.
+- **Pending reviewers**: entries in `reviewRequests` who haven't responded.
+- **CI status**: `passing` | `failing` | `pending` | `none`.
+- **Merge readiness**: `ready` | `conflicts` | `blocked` | `unknown`.
+- **Unresponded comment count** (2a/2b PRs only): unresolved, non-outdated threads + unacknowledged conversation comments.
+- **PR type**: `my-pr` (2a/2b) | `others-pr` (2c).
+- **Reason for inclusion**: `approved` | `unresponded-comments` | `both` | `thread-reply` | `mention` | `direct-mention` | `team-mention` | `multiple`.
+- **CHANGES_REQUESTED override**: If any reviewer's latest review state is `CHANGES_REQUESTED`, default action is `ADDRESS` regardless of approvals.
 
 ---
 
 ## Phase 3 — Build the Triage Board File
 
-Write the triage board to:
+Write to:
 ```
 /tmp/pr-action-board-{YYYYMMDD-HHMMSS}.md
 ```
-
-(Include seconds to avoid collisions on re-invocations within the same minute.)
 
 ### File format
 
@@ -164,24 +236,34 @@ GitHub login: @{login}
 
 ---
 
-## Summary Table
+## My Open PRs
 
 | PR | Title | Repo | Reason | Approvers | CI | Merge Ready | Unresponded | Updated |
 |----|-------|------|--------|-----------|----|-----------  |-------------|---------|
 | [#123](url) | Fix login redirect | embarkvet/foo | approved | @alice, @bob | passing | ready | 0 | 2h ago |
 | [#118](url) | Add PostHog tracking | embarkvet/bar | unresponded-comments | — | failing | blocked | 3 | 1d ago |
 
-**Total PRs:** N  
-**Approved + ready to merge:** M  
-**Blocked / need attention:** K
+**Total:** N  **Approved + ready:** M  **Need attention:** K
+
+---
+
+## Others' PRs — Action Needed From Me
+
+| PR | Author | Repo | Reason | Context | Updated |
+|----|--------|------|--------|---------|---------|
+| [#77](url) | @alice | embarkvet/bar | thread-reply | Reply to my comment on `src/auth.ts:14` | 3h ago |
+| [#55](url) | @bob | embarkvet/baz | direct-mention | @kinanf tagged in comment by @carol | 1d ago |
+| [#42](url) | @dave | embarkvet/qux | description-mention | PR description mentions @kinanf | 2d ago |
+
+**Total:** N
 
 ---
 
 ## PR Details & Actions
 
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-### [#123] Fix login redirect — embarkvet/foo
+### [My PR] [#123] Fix login redirect — embarkvet/foo
 
 **URL:** https://github.com/embarkvet/foo/pull/123  
 **Branch:** `fix/login-redirect` → `main`  
@@ -203,45 +285,71 @@ MERGE
 ```
 
 <!-- Set to one of: MERGE | ADDRESS | SKIP -->
-<!-- MERGE  → merge this PR, then monitor CI with /resolve-ci-failures -->
-<!-- ADDRESS → address unresolved comments with /address-pr-comments -->
-<!-- SKIP   → do nothing this round -->
+<!-- MERGE   → merge this PR, then monitor CI -->
+<!-- ADDRESS → spin up an agent to address reviewer comments -->
+<!-- SKIP    → do nothing this round -->
 
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-### [#118] Add PostHog tracking — embarkvet/bar
+### [Others' PR] [#77] Refactor auth service — embarkvet/bar
 
-**URL:** https://github.com/embarkvet/bar/pull/118  
-**Branch:** `feature/posthog` → `main`  
-**Reason:** unresponded-comments  
-**Approvers:** none  
-**Pending reviewers:** @carol  
-**CI:** failing  
-**Merge ready:** blocked  
-**Unresponded comments:** 3  
+**URL:** https://github.com/embarkvet/bar/pull/77  
+**Author:** @alice  
+**Reason:** thread-reply  
+**Updated:** 3h ago  
 
-#### Reviewer Activity
+#### Unresponded Thread Replies
 
-- @carol (2d ago, CHANGES_REQUESTED): "This will fire an event on every render — should be memoized. Also the API key is hardcoded, that needs to be an env var."
-- @dave (1d ago, inline on `src/tracking.ts:42`): "Why not use the existing `useAnalytics` hook here instead?"
-- @carol (12h ago, PR comment): "Any update on the memoization fix?"
+- Review thread on `src/auth.ts:14` — @alice (3h ago): "Do you think we should extract this into a shared helper? Would love your take since you built the original."
 
-### Action
+#### Action
 
 ```
-ADDRESS
+REPLY
 ```
 
-<!-- Set to one of: MERGE | ADDRESS | SKIP -->
+<!-- Set to one of: REPLY | SKIP -->
+<!-- REPLY → I will draft a response and post it after your approval -->
+<!-- SKIP  → skip this round -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+### [Others' PR] [#55] Add rate limiting — embarkvet/baz
+
+**URL:** https://github.com/embarkvet/baz/pull/55  
+**Author:** @bob  
+**Reason:** direct-mention  
+**Mentioned at:** 2026-05-07 14:32 UTC  
+**Updated:** 1d ago  
+
+#### Mention Context
+
+- @carol (1d ago, PR comment): "@kinanf — can you review the token bucket implementation here? You wrote the original spec."
+
+#### Action
+
+```
+REPLY
 ```
 
-Include the `#### Reviewer Activity` section only for PRs with unresponded comments — list each unresponded comment/review in chronological order, truncated to 200 chars. For approved PRs with no unresponded comments, write `*(none — approved cleanly)*`.
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+```
+
+**"Others' PR" detail format:**
+- Header: `### [Others' PR] [#N] {title} — {owner}/{repo}`
+- Show: URL, Author, Reason, Mentioned at (for mention reasons) or Updated at (for thread-reply), Updated
+- Show `#### Unresponded Thread Replies` (for `thread-reply`) listing each reply truncated to 200 chars
+- Show `#### Mention Context` (for mention reasons) showing the comment(s) that triggered the match, truncated to 200 chars
+- Default action: `REPLY`
+
+**"My PR" detail format:** unchanged from before (see example above).
 
 **Default action values:**
-- Approved + merge-ready + CI passing + 0 unresponded: default to `MERGE`
-- Has unresponded comments OR CI failing OR merge blocked: default to `ADDRESS`
-- Draft PR: default to `SKIP` (note it is a draft)
-- Everything else: leave as `TBD` and note what the human should consider
+- My PR — approved + merge-ready + CI passing + 0 unresponded: `MERGE`
+- My PR — unresponded comments OR CI failing OR merge blocked: `ADDRESS`
+- My PR — draft: `SKIP` (note it is a draft)
+- Others' PR — any: `REPLY`
+- Everything else: `TBD`
 
 After writing the file, tell the human:
 
@@ -249,9 +357,10 @@ After writing the file, tell the human:
 Triage board written to: /tmp/pr-action-board-{timestamp}.md
 
 Open the file and set the Action for each PR:
-  MERGE    → I will merge it and monitor CI (default for approved + clean)
-  ADDRESS  → I will spin up an agent to address reviewer comments
-  SKIP     → skip this round
+  MERGE   → I will merge it and monitor CI (default for approved + clean)
+  ADDRESS → I will address reviewer comments on your PR
+  REPLY   → I will draft a reply and post it after your approval
+  SKIP    → skip this round
 
 Save the file and tell me "done" to execute.
 ```
@@ -262,70 +371,60 @@ Save the file and tell me "done" to execute.
 
 ## Phase 4 — Parse Annotations
 
-Re-read the triage file. For each PR's `### Action` section, find the **first non-comment, non-blank line** inside the code block that matches one of:
+Re-read the triage file. For each PR's `### Action` section, find the **first non-comment, non-blank line** inside the code block that matches:
 
-- `/^MERGE$/i` → proceed with merge flow (Phase 5a)
-- `/^ADDRESS$/i` → proceed with address flow (Phase 5b)
-- `/^SKIP$/i` → log as skipped, no action taken
-- `/^TBD$/i` → surface to the human for a decision (see below)
-- Malformed or missing code block fences → treat as `TBD` and surface to the human; do not guess
+- `/^MERGE$/i` → Phase 5a
+- `/^ADDRESS$/i` → Phase 5b
+- `/^REPLY$/i` → Phase 5c
+- `/^SKIP$/i` → log as skipped
+- `/^TBD$/i` → surface to the human (see below)
+- Malformed or missing code block → treat as `TBD`
 
-**TBD handling:** Dispatch all PRs with clear MERGE/ADDRESS/SKIP annotations immediately. Surface TBD and unrecognized PRs to the human in parallel, and dispatch their agents as soon as the human resolves each one. Do not block the entire queue waiting for a single TBD.
+**TBD handling:** Dispatch all clear-action PRs immediately. Surface TBD PRs to the human in parallel; dispatch their agents as soon as the human resolves each one.
 
-Tally: `{M} MERGE, {A} ADDRESS, {S} SKIP, {T} TBD`
+Tally: `{M} MERGE, {A} ADDRESS, {R} REPLY, {S} SKIP, {T} TBD`
 
 ---
 
 ## Phase 5 — Execute Actions
 
-### 5a. MERGE flow (one agent per PR, run in parallel)
+### 5a. MERGE flow (parallel)
 
-For each MERGE-annotated PR, spin up a dedicated general-purpose agent named after a unique American outlaw from the 1800s–1900s (e.g. Butch Cassidy, Jesse James, Belle Starr, Black Bart, Dutch Schultz, Pretty Boy Floyd, Billy the Kid, Bonnie Parker, Sam Bass, Pearl Hart, John Wesley Hardin, Cole Younger, Doc Holliday, Calamity Jane, Tom Horn, Kid Curry, Sundance Kid, Cherokee Bill, Cattle Annie, Emmett Dalton). Names must be unique across all agents in this session — including across MERGE and ADDRESS agents. If the named list is exhausted, continue generating unique names from other historical American outlaws of the 1800s–1900s not already used.
+For each MERGE-annotated PR, spin up a dedicated general-purpose agent named after a unique American outlaw from the 1800s–1900s (e.g. Butch Cassidy, Jesse James, Belle Starr, Black Bart, Dutch Schultz, Pretty Boy Floyd, Billy the Kid, Bonnie Parker, Sam Bass, Pearl Hart, John Wesley Hardin, Cole Younger, Doc Holliday, Calamity Jane, Tom Horn, Kid Curry, Sundance Kid, Cherokee Bill, Cattle Annie, Emmett Dalton). Names must be unique across all agents in this session. If the list is exhausted, continue with other historical American outlaws.
 
-Each merge agent receives a self-contained prompt with:
-1. The PR URL and number, and repo `{owner}/{repo}`.
-2. The merge strategy to use — ask the human once before dispatching if not already specified: `--squash` (default), `--merge`, or `--rebase`.
+Each merge agent receives:
+1. PR URL, number, and repo `{owner}/{repo}`.
+2. Merge strategy — ask the human once before dispatching if not already specified: `--squash` (default), `--merge`, or `--rebase`.
 3. Instructions to:
 
    a. **Pre-merge check:** Run `gh pr view {number} --repo {owner}/{repo} --json mergeable,mergeStateStatus,statusCheckRollup,baseRefName` and verify:
-      - `mergeable` is `"MERGEABLE"` and `mergeStateStatus` is `"CLEAN"`. If `mergeable` is `null` (GitHub is still computing), wait 10 seconds and re-poll up to 3 times. Only treat as a blocker if `mergeable` is explicitly `"CONFLICTING"` or `mergeStateStatus` is a blocking state after all retries.
-      - CI is passing (`statusCheckRollup` has no failures).
-      - Cache `baseRefName` — this is the target branch for post-merge CI monitoring.
-      - If either check fails after retries, **do not merge**. Report the blocker back to the parent (the PR Action Board skill) — do not attempt to fix it silently.
+      - `mergeable` is `"MERGEABLE"` and `mergeStateStatus` is `"CLEAN"`. If `mergeable` is `null`, wait 10 seconds and re-poll up to 3 times.
+      - CI is passing.
+      - Cache `baseRefName` for post-merge monitoring.
+      - If either check fails after retries, do NOT merge — report the blocker to the parent skill.
 
    b. **Merge:**
       ```sh
       gh pr merge {number} --repo {owner}/{repo} --{strategy} --delete-branch
       ```
-      For the `--auto` flag: check `gh repo view {owner}/{repo} --json branchProtectionRules`. If the field returns an empty array or an error (not all plan tiers expose it), attempt a direct merge without `--auto`. If the direct merge fails with an error indicating required status checks, retry with `--auto` and note this in the outcome `notes` field.
+      Check `gh repo view {owner}/{repo} --json branchProtectionRules`. If it returns an empty array or errors, attempt direct merge. If direct merge fails citing required status checks, retry with `--auto`.
 
-   c. **Post-merge CI watch:** After the merge, monitor CI on `{baseRefName}` (from the pre-merge check above — do NOT hardcode `main`) for up to 10 minutes:
+   c. **Post-merge CI watch:** Monitor `{baseRefName}` for up to 10 minutes, polling every 60 seconds:
       ```sh
-      gh run list --branch {baseRefName} --repo {owner}/{repo} --limit 3 --json databaseId,status,conclusion,name,createdAt
+      gh run list --branch {baseRefName} --repo {owner}/{repo} --limit 3 \
+        --json databaseId,status,conclusion,name,createdAt
       ```
-      Poll every 60 seconds. If any run fails within the monitoring window, invoke `/resolve-ci-failures` on `{baseRefName}` of that repo. If CI has not reached a terminal state after 10 minutes, return `ci_outcome: timed_out` in the JSON result and note that the run was still in progress at timeout — do NOT invoke `/resolve-ci-failures` for a timed-out run; surface it to the human for manual follow-up instead.
+      If any run fails, invoke `/resolve-ci-failures` on `{baseRefName}`. If not terminal after 10 minutes, return `ci_outcome: timed_out` — do NOT invoke `/resolve-ci-failures` for timed-out runs.
 
-   d. **Jira ticket transition (only after CI is green):** Once CI reaches a passing state — either originally passing, or passing after `/resolve-ci-failures` completes successfully — attempt to transition the associated Jira ticket to Done:
+   d. **Jira ticket transition (only after CI is green):**
+      1. Extract ticket key from PR title then `headRefName` using `[A-Z]+-\d+`. If none found, record `jira_transition: skipped_no_ticket`.
+      2. Fetch available transitions via `getTransitionsForJiraIssue`.
+      3. Select target: "Done" → "Merged" → "Released" → "Closed" (first match, case-insensitive).
+      4. Idempotency check via `getJiraIssue` — skip if already in or past target state.
+      5. Apply via `transitionJiraIssue`. On error, record `jira_transition: failed` and do not block.
+      6. Skip entirely if CI is not green; record `jira_transition: skipped_ci_not_green`.
 
-      1. **Extract the ticket key** from the PR title and branch name using the pattern `[A-Z]+-\d+` (e.g. `BBH-1915`, `PROJ-42`). Check the PR title first, then `headRefName`. Use the first match found. If no ticket key is found, skip this step entirely and record `jira_transition: skipped_no_ticket` in the JSON result.
-
-      2. **Fetch available transitions:**
-         Use the Atlassian MCP `getTransitionsForJiraIssue` tool with the extracted ticket key.
-
-      3. **Select the target transition** using this priority order (case-insensitive substring match):
-         - "Done" → first choice
-         - "Merged" → second choice
-         - "Released" → third choice
-         - "Closed" → fourth choice
-         If none match, skip the transition and record `jira_transition: skipped_no_matching_state` with the available transition names listed in `notes`.
-
-      4. **Idempotency check:** Fetch the ticket's current status via `getJiraIssue`. If it is already in the matched target state or any downstream state (e.g. already "Done"), skip the transition and record `jira_transition: skipped_already_done`.
-
-      5. **Apply the transition** using `transitionJiraIssue`. If the MCP connector is unavailable or the API returns an error, record `jira_transition: failed` with the error in `notes` — do not retry, do not block the merge outcome report.
-
-      This step must be skipped entirely (record `jira_transition: skipped_ci_not_green`) if CI did not reach a passing state — i.e., if `ci_outcome` is `failing`, `timed_out`, or `skipped`.
-
-   e. Return a JSON result:
+   e. Return:
       ```json
       {
         "pr": 123,
@@ -339,108 +438,115 @@ Each merge agent receives a self-contained prompt with:
       }
       ```
 
-Run all MERGE agents in parallel (single message, multiple tool calls).
+### 5b. ADDRESS flow (sequential — each requires human interaction)
 
-### 5b. ADDRESS flow (one agent per PR, run sequentially — each requires human interaction)
+For each ADDRESS-annotated PR (my own PRs), spawn a dedicated agent (continue unique outlaw names). Run **sequentially**.
 
-For each ADDRESS-annotated PR, spawn a dedicated general-purpose agent (use remaining unique outlaw names). Run these **sequentially**, one at a time — each agent will need to present findings to the human and wait for input before proceeding.
-
-Each address agent receives a self-contained prompt with:
-1. The PR URL, number, repo `{owner}/{repo}`, and `headRefName` (the PR's source branch).
-2. The unresponded reviewer activity captured in Phase 2 (list the comments verbatim so the agent does not have to re-fetch).
-3. Instructions to locate the correct local clone of `{owner}/{repo}` (via `find ~ -name ".git" -maxdepth 5 -type d | xargs -I{} dirname {} | xargs -I{} sh -c 'cd {} && git remote get-url origin 2>/dev/null | grep -q "{repo}" && echo {}'` or similar), check it out to `{headRefName}` (`git checkout {headRefName} && git pull`), and then invoke `/address-pr-comments`. The `/address-pr-comments` skill operates on the *current branch* of the working directory — it will fail silently or target the wrong PR if the branch is not checked out first.
-4. If no local clone is found, report back to the parent skill with `status: no_local_clone` and do not proceed — the human must check out the repo manually.
-5. Instructions to invoke `/address-pr-comments` for this PR and return its findings **before making any code changes or committing anything**.
-4. Explicit instruction: **Do NOT invoke `/build` or `/critique` until the parent skill (PR Action Board) presents the findings to the human and receives approval.**
-5. The agent must return a structured summary of findings and proposed actions in this format:
-
+Each address agent receives:
+1. PR URL, number, repo `{owner}/{repo}`, and `headRefName`.
+2. The unresponded reviewer activity from Phase 2b (verbatim, so the agent does not need to re-fetch).
+3. Instructions to locate the local clone, check out `{headRefName}`, and invoke `/address-pr-comments`. The agent must return findings **before making any changes**.
+4. If no local clone is found: return `status: no_local_clone` — do not proceed.
+5. Return findings in:
    ```json
    {
      "pr": 118,
      "repo": "owner/repo",
      "proposed_changes": [
-       {
-         "comment_author": "@carol",
-         "comment_summary": "Memoize the event call",
-         "proposed_action": "Wrap in useMemo — see src/tracking.ts:42",
-         "type": "code_change | discussion | ignore"
-       }
+       { "comment_author": "@carol", "comment_summary": "...", "proposed_action": "...", "type": "code_change | discussion | ignore" }
      ],
      "discussion_items": [
-       {
-         "comment_author": "@dave",
-         "question": "Why not use useAnalytics hook?",
-         "draft_reply": "The useAnalytics hook doesn't support batched events yet — this is a deliberate short-term workaround."
-       }
+       { "comment_author": "@dave", "question": "...", "draft_reply": "..." }
      ],
-     "questions_for_human": [
-       "Carol also asked about the hardcoded API key — do you want me to move it to env or is there a separate ticket for that?"
-     ]
+     "questions_for_human": ["..."]
    }
    ```
 
 **After each address agent returns findings:**
+1. Present proposed changes, discussion items, and questions clearly.
+2. Wait for human approval — which changes to make, which to skip, how to answer questions.
+3. Only after approval: send follow-up to the agent to implement changes, post discussion replies, run `/build`, and run `/critique`.
+4. Wait for completion before the next ADDRESS PR.
 
-1. Present the findings to the human in a clear, structured format:
-   - List proposed code changes with the comment that prompted them
-   - List discussion items with the draft reply
-   - Ask any `questions_for_human` explicitly and wait for answers
-2. Wait for the human to respond and confirm which proposed changes to proceed with, which to skip, and how to answer discussion items.
-3. Only after human approval: send a follow-up message to the agent instructing it to:
-   - Implement the approved code changes
-   - Post replies to discussion threads
-   - Run `/build` to verify the changes compile and tests pass
-   - Run `/critique` to commit, push, and open/update the PR
-4. Wait for the agent to complete before moving to the next ADDRESS PR.
+### 5c. REPLY flow (sequential — each requires human interaction)
 
-If the human answers questions for a PR, pass the answers into the follow-up message verbatim.
+For each REPLY-annotated PR (others' PRs where I'm mentioned or got a thread reply), spawn a dedicated agent (continue unique outlaw names). Run **sequentially**.
+
+Each reply agent receives:
+1. PR URL, number, repo `{owner}/{repo}`, PR author.
+2. The full mention/thread context captured in Phase 2c (verbatim — exact comment text, author, timestamp).
+3. Instructions to draft one reply per unresponded thread or mention. The draft should:
+   - Be professional and actionable.
+   - Reference the specific question or request.
+   - NOT make any code changes.
+4. Return a structured draft:
+   ```json
+   {
+     "pr": 77,
+     "repo": "owner/repo",
+     "drafts": [
+       {
+         "target_type": "review_thread | pr_comment | pr_description",
+         "target_id": "thread id or comment id or null",
+         "context_summary": "Alice asked for my take on extracting a shared helper",
+         "draft_reply": "Hey @alice — yeah I think extracting it makes sense. The original pattern in the auth module was...",
+         "questions_for_human": ["Do you want me to volunteer to implement the extraction, or just answer the question?"]
+       }
+     ]
+   }
+   ```
+
+**After each reply agent returns drafts:**
+1. Present each draft reply with its context to the human.
+2. Ask the human: approve as-is, edit, or skip each draft. Wait for answers to `questions_for_human`.
+3. Only after approval: send follow-up to the agent to post approved replies.
+   - All replies posted to GitHub must open with `_Posted by Farty Bobo on behalf of @{gh_login}._`
+   - For review thread replies: use `first_comment_rest_id` from the `review_thread_replies` entry (provided by `check-pr-threads.sh`). Post via `gh api -X POST repos/{owner}/{repo}/pulls/comments/{first_comment_rest_id}/replies -f body="..."`. This is the REST integer comment ID, not the GraphQL node ID.
+   - For PR-level comments: post via `gh api repos/{owner}/{repo}/issues/{number}/comments`
+4. Wait for completion before the next REPLY PR.
 
 ---
 
 ## Phase 6 — Update Triage File and Report
 
-Phase 6 runs only after ALL agents — both MERGE and ADDRESS — have returned their results to the parent skill. The parent skill (PR Action Board) performs all writes to the triage file in a single sequential pass. Sub-agents do NOT write to the triage file themselves; they only return structured results.
+Phase 6 runs only after ALL agents have returned. The parent skill (PR Action Board) writes the triage file; sub-agents do NOT.
 
 1. Re-read the triage file.
-2. For each PR, append an `#### Outcome` subsection under its `### Action` block:
-
+2. Append `#### Outcome` under each PR's `### Action` block:
    ```markdown
    #### Outcome
 
-   **Status:** merged | addressed | skipped | blocked  
+   **Status:** merged | addressed | replied | skipped | blocked  
    **Completed:** {timestamp}  
-   **Details:** {one-sentence summary — e.g. "Merged via squash. CI passed on main." or "3 comments addressed, 1 discussion replied to, PR pushed and critique passed."}  
-   **CI post-merge:** passing | failing (see /resolve-ci-failures output below) | timed_out | n/a  
-   **Jira:** {ticket key} transitioned to Done | skipped ({reason}) | n/a  
+   **Details:** {one-sentence summary}  
+   **CI post-merge:** passing | failing | timed_out | n/a  
+   **Jira:** {ticket} → Done | skipped ({reason}) | n/a  
    ```
-
-3. Update the Summary Table at the top — add an `Outcome` column with the final status per PR.
-
-4. Report to the human in the conversation:
-
+3. Add an `Outcome` column to both summary tables.
+4. Report to the human:
    ```
    PR Action Board — complete.
 
    ✓  MERGE  [#123] embarkvet/foo — merged. CI passing. BBH-1915 → Done.
-   ✓  MERGE  [#117] embarkvet/foo — merged. CI passing. No ticket found — Jira skipped.
    ✓  ADDRESS [#118] embarkvet/bar — 3 comments addressed, pushed, critique passed.
-   —  SKIP   [#101] embarkvet/baz — skipped per your instruction.
+   ✓  REPLY  [#77] embarkvet/bar — 1 thread reply posted.
+   ✓  REPLY  [#55] embarkvet/baz — 1 mention reply posted.
+   —  SKIP   [#101] embarkvet/qux — skipped per your instruction.
    ✗  MERGE  [#109] embarkvet/qux — blocked: merge conflicts. Needs manual rebase.
 
    Updated triage file: /tmp/pr-action-board-{timestamp}.md
    ```
 
-   For any failures or outstanding blockers, surface them explicitly and suggest next steps.
-
 ---
 
 ## Guardrails
 
-- **No merges or commits without annotation.** This skill takes no destructive action until the human has annotated the triage file and said "done". The pre-merge check in Phase 5a is a second safety gate — it will refuse to merge if the PR is not actually mergeable at execution time.
-- **Human-in-the-loop for ADDRESS.** Each ADDRESS PR must get explicit human approval on proposed changes before any code is modified or committed. The agent presents findings first; the human decides what to do.
-- **Do not post the triage file externally.** The `/tmp` file is local. Do not upload it to Slack, Jira, Confluence, or anywhere else.
-- **Sequential ADDRESS, parallel MERGE.** MERGE agents are fire-and-report. ADDRESS agents require human interaction at each step — do not try to run them in parallel.
-- **Identity disclosure on any GitHub posts.** Every comment, reply, notification, or re-review-request message posted to GitHub — including replies to review threads, PR-level acknowledgment comments, and "feedback has been addressed" notifications — must open with `_Posted by Farty Bobo on behalf of @{gh_login}._` — this is non-negotiable per CLAUDE.md.
-- **No summary comments posted to GitHub PRs.** PR-level summary comments are never posted. All summaries stay in the triage file and the conversation. Only inline code review comments and targeted reply comments to specific review threads are permitted on GitHub.
-- **One round per invocation.** New PRs or new comments that arrive after Phase 2 are not included. Re-invoke the skill to pick them up.
-- **Outlaw names must be unique per session.** Do not reuse an agent name within a single run — even if the previous agent with that name has completed.
+- **No merges or commits without annotation.** The skill takes no destructive action until the human annotates and says "done". The pre-merge check in Phase 5a is a second safety gate.
+- **Human-in-the-loop for ADDRESS.** Findings are presented before any code is modified.
+- **Human-in-the-loop for REPLY.** Draft replies are presented before posting. No reply is sent without explicit approval.
+- **No external posts without disclosure.** Every comment, reply, or notification posted to GitHub must open with `_Posted by Farty Bobo on behalf of @{gh_login}._`
+- **No summary comments to GitHub PRs.** Only inline code review comments and targeted replies to specific threads. Summaries stay in the triage file.
+- **Sequential ADDRESS and REPLY, parallel MERGE.** MERGE agents are fire-and-report. ADDRESS and REPLY agents require human interaction.
+- **Do not post the triage file externally.** The `/tmp` file is local only.
+- **One round per invocation.** New PRs or comments arriving after Phase 2 are not included.
+- **Outlaw names must be unique per session.** Never reuse a name — even after the previous agent has completed.
