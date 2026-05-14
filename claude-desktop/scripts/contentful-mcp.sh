@@ -27,7 +27,7 @@ if [[ -f "$VERSIONS_FILE" ]]; then
   source "$VERSIONS_FILE"
 fi
 
-if [[ -z "${CONTENTFUL_MCP_VERSION:-}" ]]; then
+if [[ -z "${CONTENTFUL_MCP_VERSION:-}" || -z "${CONTENTFUL_MANAGEMENT_ACCESS_TOKEN:-}" ]]; then
   exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 

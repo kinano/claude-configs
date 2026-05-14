@@ -17,7 +17,7 @@ set -a
 source "$ENV_FILE"
 set +a
 
-if [[ -z "${DBT_PROJECT_DIR:-}" || -z "${DBT_PATH:-}" ]]; then
+if [[ -z "${DBT_PROJECT_DIR:-}" || -z "${DBT_PATH:-}" || ! -d "${DBT_PROJECT_DIR}" || ! -f "${DBT_PATH}" ]]; then
   exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 
