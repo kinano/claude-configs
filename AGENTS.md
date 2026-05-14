@@ -27,8 +27,7 @@ set -euo pipefail
 ENV_FILE="$HOME/.claude/mcp.env"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  echo "INFO: $ENV_FILE not found — <server-name> MCP server not configured on this machine." >&2
-  exit 0
+  exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 
 env_perms=$(stat -Lf "%OLp" "$ENV_FILE")

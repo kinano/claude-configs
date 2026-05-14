@@ -4,8 +4,7 @@ set -euo pipefail
 ENV_FILE="$HOME/.claude/mcp.env"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  echo "INFO: $ENV_FILE not found — datadog MCP server not configured on this machine." >&2
-  exit 0
+  exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 
 env_perms=$(stat -Lf "%OLp" "$ENV_FILE")
@@ -19,8 +18,7 @@ source "$ENV_FILE"
 set +a
 
 if [[ -z "${DD_API_KEY:-}" || -z "${DD_APPLICATION_KEY:-}" ]]; then
-  echo "INFO: DD_API_KEY or DD_APPLICATION_KEY not set — datadog MCP server not configured on this machine." >&2
-  exit 0
+  exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 if [[ ! "${DD_API_KEY}" =~ ^[a-f0-9]{32}$ ]]; then
   echo "ERROR: DD_API_KEY does not look like a valid DataDog API key (expected 32 hex chars)." >&2
@@ -43,8 +41,7 @@ if [[ -f "$VERSIONS_FILE" ]]; then
 fi
 
 if [[ -z "${MCP_REMOTE_VERSION:-}" ]]; then
-  echo "INFO: MCP_REMOTE_VERSION is not set in mcp-versions.env — skipping datadog MCP server." >&2
-  exit 0
+  exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 if [[ ! "${MCP_REMOTE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "ERROR: MCP_REMOTE_VERSION='${MCP_REMOTE_VERSION}' is not a valid semver string." >&2
