@@ -17,7 +17,7 @@ set -a
 source "$ENV_FILE"
 set +a
 
-if [[ -z "${LINEARB_API_TOKEN:-}" ]]; then
+if [[ -z "${LINEAR_API_KEY:-}" ]]; then
   exec python3 "$HOME/.claude/scripts/mcp-stub.py"
 fi
 
@@ -41,6 +41,5 @@ if [[ ! "${MCP_REMOTE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 exec npx "mcp-remote@${MCP_REMOTE_VERSION}" \
-  "https://mcp.linearb.io/mcp" \
-  --transport http-only \
-  --header "x-api-key:${LINEARB_API_TOKEN}"
+  "https://mcp.linear.app/mcp" \
+  --header "Authorization: Bearer ${LINEAR_API_KEY}"

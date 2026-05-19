@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "linearb": {
+    "linear": {
       "command": "/bin/bash",
-      "args": ["-c", "~/.claude/scripts/linearb-mcp.sh"]
+      "args": ["-c", "~/.claude/scripts/linear-mcp.sh"]
     },
     "dbt": {
       "command": "/bin/bash",
