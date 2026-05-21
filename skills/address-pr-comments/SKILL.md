@@ -33,16 +33,16 @@ disable-model-invocation: false
 
    ```sh
    # List unresolved threads (tab-separated: id, path:line, author, snippet)
-   ./skills/address-pr-comments/list-unresolved-threads.sh <pr-number|pr-url> [--repo OWNER/REPO]
+   ~/.claude/skills/address-pr-comments/list-unresolved-threads.sh <pr-number|pr-url> [--repo OWNER/REPO]
 
    # Resolve specific threads by ID
-   ./skills/address-pr-comments/resolve-threads.sh <thread-id> [<thread-id>...]
+   ~/.claude/skills/address-pr-comments/resolve-threads.sh <thread-id> [<thread-id>...]
 
    # Or resolve every unresolved thread on a PR
-   ./skills/address-pr-comments/resolve-threads.sh --all <pr-number|pr-url> [--repo OWNER/REPO]
+   ~/.claude/skills/address-pr-comments/resolve-threads.sh --all <pr-number|pr-url> [--repo OWNER/REPO]
    ```
 
-   Paths above are relative to the repo root; invoke with absolute paths if running from elsewhere. Only resolve threads whose feedback you actually addressed. Skip discussion-type threads that are still waiting on a human reply. Resolution requires triage/write permission on the repo — report any failures to the human.
+   Always use the absolute paths above — these scripts live in `~/.claude/skills/`, not in the user's repo. Only resolve threads whose feedback you actually addressed. Skip discussion-type threads that are still waiting on a human reply. Resolution requires triage/write permission on the repo — report any failures to the human.
 8. Re-request review from the original commenters if they had requested changes or notify them via a PR comment that their feedback has been addressed. Any notification comment MUST also open with the same identity disclosure described in step 5.
 9. After pushing, check CI status using `gh pr checks`. If any checks are failing, invoke `/resolve-ci-failures` to investigate and fix them.
 10. This skill covers one round of comments. If new comments arrive after this round is complete, the human should invoke this skill again.
