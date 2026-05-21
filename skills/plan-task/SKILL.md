@@ -148,11 +148,11 @@ Produce a set of tests before human review. These tests are the **acceptance con
 - Tests must NOT rely on wall-clock time, random values, network availability, or execution order
 - Async operations must use proper awaiting — no `setTimeout`/`sleep` hacks
 
-**AC traceability:** Each test or describe block must include a comment referencing the AC it covers (e.g., `// AC-3: User cannot submit with invalid email`). Before completing this step, produce a **coverage matrix** — a table mapping every AC to at least one test by name. Any AC with zero test coverage is a blocker; do not proceed until it is covered.
+**AC traceability:** Before completing this step, produce a **coverage matrix** in the plan file — a table mapping every AC to at least one test by name. Any AC with zero test coverage is a blocker; do not proceed until it is covered. Do NOT embed AC numbers or ticket IDs as comments inside the test files themselves.
 
 **Integration tests:** If an AC involves user-facing output, data persistence, external service calls, auth, or multi-service interactions, it **must** have an integration or e2e test in addition to any unit tests. A unit test with a mocked integration point does not satisfy this requirement — it only supplements it.
 
-**CI safety:** Mark all new tests with the framework's skip/pending mechanism (e.g., `it.todo`, `xit`, `@pytest.mark.xfail`, `pending` in RSpec) so they are tracked without breaking CI. Include a comment with the ticket ID. The skip markers are removed — NOT the tests — as part of the implementation PR.
+**CI safety:** Mark all new tests with the framework's skip/pending mechanism (e.g., `it.todo`, `xit`, `@pytest.mark.xfail`, `pending` in RSpec) so they are tracked without breaking CI. The skip markers are removed — NOT the tests — as part of the implementation PR.
 
 **Verify the red phase:** After writing the tests, **run the test suite** and confirm every new acceptance test fails (or is marked pending). Capture the failure output. If any new test passes against the unmodified codebase, it is not an acceptance test — it is noise. Fix or remove it before proceeding. If the test environment is unavailable, document this explicitly and flag it for the human.
 
